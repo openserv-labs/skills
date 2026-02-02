@@ -1,0 +1,176 @@
+# OpenServ SDK Reference (v2.1)
+
+Quick reference for common patterns.
+
+## What's New in v2.1
+
+- **Built-in Tunnel** - `run()` auto-connects to `agents-proxy.openserv.ai` for local dev
+- **No Endpoint URL Needed** - Skip `endpointUrl` in `provision()` during development
+- **Automatic Port Fallback** - If port 7378 is busy, finds an available one
+- **Direct Credential Binding** - Pass `agent.instance` to `provision()` for automatic credential binding
+- **`setCredentials()` Method** - Manually bind API key and auth token to agent
+
+## Installation
+
+```bash
+npm install @openserv-labs/sdk @openserv-labs/client zod openai
+```
+
+## Minimal Agent
+
+```typescript
+import 'dotenv/config'
+import { Agent, run } from '@openserv-labs/sdk'
+import { provision, triggers } from '@openserv-labs/client'
+import { z } from 'zod'
+
+// 1. Define your agent
+const agent = new Agent({
+  systemPrompt: 'You are a helpful assistant.'
+})
+
+// 2. Add capabilities
+agent.addCapability({
+  name: 'greet',
+  description: 'Greet a user',
+  schema: z.object({ name: z.string() }),
+  async run({ args }) {
+    return `Hello, ${args.name}!`
+  }
+})
+
+async function main() {
+  // 3. Provision with agent instance binding (v2.1+)
+  await provision({
+    agent: {
+      instance: agent, // Binds API key and auth token directly to agent
+      name: 'my-agent',
+      description: '...'
+    },
+    workflow: { name: 'default', trigger: triggers.webhook({ waitForCompletion: true }) }
+  })
+
+  // 4. Run - auto-connects via agents-proxy.openserv.ai (no ngrok needed!)
+  await run(agent)
+}
+
+main().catch(console.error)
+```
+
+> **Tip:** No need for ngrok or other tunneling tools - `run()` opens a tunnel automatically.
+
+## Zod Schema Patterns
+
+```typescript
+// Required string
+z.string().describe('Description')
+
+// Optional with default
+z.string().optional().default('value')
+
+// Enum
+z.enum(['a', 'b', 'c'])
+
+// Number with constraints
+z.number().min(1).max(100)
+
+// Boolean
+z.boolean().optional()
+
+// Object
+z.object({
+  field: z.string(),
+  nested: z.object({ sub: z.number() })
+})
+
+// Array
+z.array(z.string())
+```
+
+## Trigger Types
+
+```typescript
+import { triggers } from '@openserv-labs/client'
+
+// Webhook (free)
+triggers.webhook({ waitForCompletion: true, timeout: 180 })
+
+// x402 (paid)
+triggers.x402({
+  name: 'AI Service Name',
+  description: 'What your service does',
+  price: '0.01'
+})
+
+// Cron (scheduled)
+triggers.cron({ schedule: '0 9 * * *' })
+
+// Manual
+triggers.manual()
+```
+
+## Agent Methods
+
+```typescript
+// In capability run function, use 'this':
+async run({ args, action }) {
+  // Tasks
+  await this.addLogToTask({ workspaceId, taskId, severity: 'info', type: 'text', body: '...' })
+  await this.updateTaskStatus({ workspaceId, taskId, status: 'in-progress' })
+  await this.createTask({ workspaceId, assignee, description, body, input, dependencies })
+
+  // Files
+  await this.getFiles({ workspaceId })
+  await this.uploadFile({ workspaceId, path, file })
+  await this.deleteFile({ workspaceId, fileId })
+
+  // Secrets
+  await this.getSecrets({ workspaceId })
+  await this.getSecretValue({ workspaceId, secretId })
+
+  // Integrations
+  await this.callIntegration({ workspaceId, integrationId, details: { endpoint, method, data } })
+}
+```
+
+## Payments API (x402)
+
+```typescript
+import { PlatformClient } from '@openserv-labs/client'
+
+const client = new PlatformClient()
+
+// Discover x402 services
+const services = await client.payments.discoverServices()
+
+// Pay and execute an x402 workflow
+const result = await client.payments.payWorkflow({
+  triggerUrl: 'https://api.openserv.ai/webhooks/x402/trigger/...',
+  input: { prompt: 'Hello' }
+})
+
+// Get trigger preflight info
+const preflight = await client.payments.getTriggerPreflight({ token: '...' })
+```
+
+## Web3 API (Credits Top-up)
+
+```typescript
+// Top up credits with USDC (uses WALLET_PRIVATE_KEY env var)
+const result = await client.web3.topUp({ amountUsd: 10 })
+console.log(`Added ${result.creditsAdded} credits`)
+
+// Lower-level methods
+const config = await client.web3.getUsdcTopupConfig()
+await client.web3.verifyUsdcTransaction({ txHash: '0x...', payerAddress: '0x...', signature: '0x...' })
+```
+
+## Environment Variables
+
+```env
+OPENAI_API_KEY=your-key
+OPENSERV_API_KEY=auto-populated
+OPENSERV_AUTH_TOKEN=auto-populated
+WALLET_PRIVATE_KEY=auto-populated (also used for x402 payments and USDC top-up)
+PORT=7378
+```

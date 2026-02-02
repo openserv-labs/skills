@@ -1,0 +1,328 @@
+# Blog Pipeline Example
+
+A simple 2-agent sequential workflow that researches a topic and writes a blog post.
+
+## Pipeline
+
+```mermaid
+flowchart LR
+    T[Trigger] --> A[Grok Research Agent]
+    A --> B[Copywriter Agent]
+```
+
+## Task Dependencies (Sequential)
+
+```mermaid
+flowchart TD
+    A["Task 1: Grok Research<br/>dependencies: []"] --> B["Task 2: Copywriter<br/>dependencies: [task1Id]"]
+```
+
+The Copywriter waits for Grok Research to complete before starting.
+
+---
+
+## Complete Setup Script
+
+### Project Structure
+
+```
+blog-pipeline/
+├── src/
+│   └── setup.ts
+├── .env
+├── package.json
+└── tsconfig.json
+```
+
+### .env
+
+```env
+WALLET_PRIVATE_KEY=0x...
+```
+
+### package.json
+
+```json
+{
+  "name": "blog-pipeline",
+  "type": "module",
+  "scripts": {
+    "setup": "tsx src/setup.ts"
+  },
+  "dependencies": {
+    "@openserv-labs/client": "^1.0.0",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.9",
+    "tsx": "^4.16.0",
+    "typescript": "^5.5.2"
+  }
+}
+```
+
+### src/setup.ts
+
+**Recommended Approach: Using `workflows.sync()`**
+
+This uses the declarative `workflows.sync()` method which handles triggers, tasks, and edges in one call:
+
+```typescript
+import 'dotenv/config'
+import { PlatformClient, triggers } from '@openserv-labs/client'
+
+async function setup() {
+  const client = new PlatformClient()
+
+  if (!process.env.WALLET_PRIVATE_KEY) {
+    console.error('Missing WALLET_PRIVATE_KEY in .env')
+    process.exit(1)
+  }
+
+  console.log('1. Authenticating with wallet...')
+  await client.authenticate(process.env.WALLET_PRIVATE_KEY)
+
+  console.log('2. Finding agents from marketplace...')
+  const grokResult = await client.agents.listMarketplace({ search: 'grok research' })
+  const copywriterResult = await client.agents.listMarketplace({ search: 'copywriter' })
+  const grokResearch = grokResult.items[0]
+  const copywriter = copywriterResult.items[0]
+
+  if (!grokResearch || !copywriter) {
+    console.error('   Could not find required agents')
+    const all = await client.agents.listMarketplace({})
+    all.items.slice(0, 15).forEach(a => console.log(`   ID: ${a.id} | ${a.name}`))
+    process.exit(1)
+  }
+
+  console.log(`   Grok Research: ${grokResearch.name} (ID: ${grokResearch.id})`)
+  console.log(`   Copywriter: ${copywriter.name} (ID: ${copywriter.id})`)
+
+  console.log('3. Creating workflow...')
+  const workflow = await client.workflows.create({
+    name: 'Blog Post Pipeline',
+    goal: 'Research topics and produce blog posts',
+    agentIds: [grokResearch.id, copywriter.id],
+    // Define the complete workflow declaratively
+    triggers: [
+      {
+        name: 'webhook',
+        type: 'webhook',
+        props: {
+          waitForCompletion: true,
+          timeout: 300,
+          inputSchema: {
+            type: 'object',
+            required: ['topic'],
+            properties: {
+              topic: { type: 'string', title: 'Blog Topic', description: 'Topic for the blog post' }
+            }
+          }
+        }
+      }
+    ],
+    tasks: [
+      {
+        name: 'research',
+        agentId: grokResearch.id,
+        description: 'Research the topic using Grok',
+        body: 'Research the topic using X/Twitter. Find relevant tweets, discussions, and social proof.',
+        input: '{{trigger.topic}}'
+      },
+      {
+        name: 'write',
+        agentId: copywriter.id,
+        description: 'Write the blog post',
+        body: 'Write an engaging blog post based on the research findings.'
+      }
+    ],
+    // ⚠️ CRITICAL: Edges define how data flows through your workflow
+    // Without edges, tasks won't execute even if dependencies are set!
+    edges: [
+      { from: 'trigger:webhook', to: 'task:research' },
+      { from: 'task:research', to: 'task:write' }
+    ]
+  })
+  console.log(`   Workflow ID: ${workflow.id}`)
+
+  console.log('4. Activating workflow...')
+  const trigger = workflow.triggers[0]
+  await client.triggers.activate({ workflowId: workflow.id, id: trigger.id })
+  await workflow.setRunning()
+
+  console.log('\n========================================')
+  console.log('Blog Pipeline Setup Complete!')
+  console.log('========================================')
+  console.log(`\nWorkflow ID: ${workflow.id}`)
+  console.log(`\nWorkflow: Trigger → Grok Research → Copywriter`)
+  console.log(`\nWebhook URL:`)
+  console.log(`  POST https://api.openserv.ai/webhooks/trigger/${trigger.token}`)
+  console.log(`\nExample:`)
+  console.log(`  curl -X POST https://api.openserv.ai/webhooks/trigger/${trigger.token} \\`)
+  console.log(`    -H "Content-Type: application/json" \\`)
+  console.log(`    -d '{"topic": "AI trends in 2026"}'`)
+  console.log('========================================')
+}
+
+setup().catch(err => {
+  console.error('Setup failed:', err.message)
+  process.exit(1)
+})
+```
+
+---
+
+### Alternative: Manual Approach with Edges
+
+If you prefer creating tasks step-by-step, you **must** create workflow edges to connect them:
+
+```typescript
+import 'dotenv/config'
+import { PlatformClient, triggers, triggerConfigToProps } from '@openserv-labs/client'
+
+async function setup() {
+  const client = new PlatformClient()
+  await client.authenticate(process.env.WALLET_PRIVATE_KEY!)
+
+  // Find agents...
+  const grokResult = await client.agents.listMarketplace({ search: 'grok research' })
+  const copywriterResult = await client.agents.listMarketplace({ search: 'copywriter' })
+  const grokResearch = grokResult.items[0]
+  const copywriter = copywriterResult.items[0]
+
+  // Create workflow
+  const workflow = await client.workflows.create({
+    name: 'Blog Post Pipeline',
+    goal: 'Research topics and produce blog posts',
+    agentIds: [grokResearch.id, copywriter.id]
+  })
+
+  // Create tasks
+  const task1 = await client.tasks.create({
+    workflowId: workflow.id,
+    agentId: grokResearch.id,
+    description: 'Research the topic using Grok',
+    body: 'Research the topic using X/Twitter. Find relevant tweets, discussions, and social proof.',
+    input: '{{trigger.topic}}'
+  })
+
+  const task2 = await client.tasks.create({
+    workflowId: workflow.id,
+    agentId: copywriter.id,
+    description: 'Write the blog post',
+    body: 'Write an engaging blog post based on the research findings.'
+  })
+
+  // Create trigger
+  const connId = await client.integrations.getOrCreateConnection('webhook-trigger')
+  const trigger = await client.triggers.create({
+    workflowId: workflow.id,
+    name: 'Blog Request',
+    integrationConnectionId: connId,
+    props: triggerConfigToProps(
+      triggers.webhook({
+        waitForCompletion: true,
+        timeout: 300,
+        input: {
+          topic: { type: 'string', title: 'Blog Topic' }
+        }
+      })
+    )
+  })
+
+  // ⚠️ CRITICAL: Create workflow edges to connect trigger → tasks
+  // Without this step, your workflow will NOT execute!
+  await client.put(`/workspaces/${workflow.id}/workflow`, {
+    workflow: {
+      nodes: [
+        {
+          id: `trigger-${trigger.id}`,
+          type: 'trigger',
+          triggerId: trigger.id,
+          position: { x: 0, y: 0 },
+          inputPorts: [],
+          outputPorts: [{ id: 'default' }],
+          isEndNode: false
+        },
+        {
+          id: `task-${task1.id}`,
+          type: 'task',
+          taskId: task1.id,
+          position: { x: 300, y: 0 },
+          inputPorts: [{ id: 'input' }],
+          outputPorts: [{ id: 'default' }],
+          isEndNode: false
+        },
+        {
+          id: `task-${task2.id}`,
+          type: 'task',
+          taskId: task2.id,
+          position: { x: 600, y: 0 },
+          inputPorts: [{ id: 'input' }],
+          outputPorts: [{ id: 'default' }],
+          isEndNode: true
+        }
+      ],
+      edges: [
+        {
+          id: 'edge-0',
+          source: `trigger-${trigger.id}`,
+          target: `task-${task1.id}`,
+          sourcePort: 'default',
+          targetPort: 'input'
+        },
+        {
+          id: 'edge-1',
+          source: `task-${task1.id}`,
+          target: `task-${task2.id}`,
+          sourcePort: 'default',
+          targetPort: 'input'
+        }
+      ],
+      lastUpdatedTimestamp: Date.now()
+    }
+  })
+
+  // Activate workflow
+  await client.triggers.activate({ workflowId: workflow.id, id: trigger.id })
+  await workflow.setRunning()
+
+  console.log(`Webhook: https://api.openserv.ai/webhooks/trigger/${trigger.token}`)
+}
+
+setup().catch(console.error)
+```
+
+---
+
+## How It Works
+
+1. **Trigger fires** with `{ "topic": "AI trends in January 2026" }`
+2. **Grok Research Agent** receives the topic, searches X/Twitter for relevant content
+3. **Grok Research completes** → Copywriter task becomes ready
+4. **Copywriter** receives the research, writes a blog post
+5. **Copywriter completes** → Blog post returned via webhook response
+
+## Workflow Graph
+
+```mermaid
+flowchart TD
+    T[Trigger] -->|topic| A[Task 1: Grok Research]
+    A -->|research findings| B[Task 2: Copywriter]
+    B -->|blog post| R[Result]
+```
+
+## Usage
+
+```bash
+# Install dependencies
+npm install
+
+# Run setup (creates workflow, tasks, trigger)
+npm run setup
+
+# Trigger the workflow
+curl -X POST https://api.openserv.ai/webhooks/trigger/{token} \
+  -H "Content-Type: application/json" \
+  -d '{"topic": "The future of autonomous AI agents"}'
+```

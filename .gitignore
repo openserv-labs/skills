@@ -1,0 +1,18 @@
+# Backup files created during installation
+*.bak
+
+# Local symlinks
+platform
+launchpad
+sdk
+client
+client-e2e-tests
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+*.swp
+*.swo
+*~
