@@ -57,7 +57,7 @@ See `examples/blog-pipeline.md` for a complete sequential example.
 ```typescript
 await client.workflows.sync({
   id: workflow.id,
-  triggers: [{ name: 'api', type: 'webhook' }],
+  triggers: [triggers.webhook({ name: 'api' })],
   tasks: [
     { name: 'research', agentId: researcherId, description: 'Research topic' },
     { name: 'write', agentId: writerId, description: 'Write article' }
@@ -72,6 +72,8 @@ await client.workflows.sync({
 
 **Why edges matter:** Setting `dependencies` on tasks only tells the backend about execution order. **Edges define the actual graph structure** that connects triggers to tasks and tasks to each other. Without edges, your workflow won't execute.
 
+**Adding agents:** `sync()` automatically adds any agents referenced in tasks that aren't already in the workspace. You can also add agents explicitly with `workflow.addAgent(agentId)` or `client.workflows.addAgent({ id, agentId })`.
+
 ### Branching Workflows with Output Options
 
 Tasks can define multiple output options for conditional branching:
@@ -79,7 +81,7 @@ Tasks can define multiple output options for conditional branching:
 ```typescript
 await client.workflows.sync({
   id: workflow.id,
-  triggers: [{ name: 'webhook', type: 'webhook' }],
+  triggers: [triggers.webhook({ name: 'webhook' })],
   tasks: [
     {
       name: 'review',
@@ -134,14 +136,24 @@ curl -X POST https://api.openserv.ai/webhooks/trigger/TOKEN \
 
 ### x402 (Paid)
 
+When using x402 triggers with `workflows.create()` or `workflow.sync()`, the wallet address for payouts is injected automatically via a fallback chain:
+
+1. **`x402WalletAddress` on the trigger config** (highest priority)
+2. **`client.walletAddress`** (set by `client.authenticate()`)
+3. **`process.env.WALLET_PRIVATE_KEY`** (derived, lowest priority)
+
+If using `provision()`, the wallet is handled entirely automatically.
+
 ```typescript
-props: triggerConfigToProps(
-  triggers.x402({
-    name: 'Pipeline',
-    price: '0.10',
-    input: { topic: { type: 'string', title: 'Topic' } }
-  })
-)
+// Option 1: Auto-injection (wallet resolved from client or env)
+triggers: [
+  triggers.x402({ name: 'Pipeline', price: '0.10', input: { topic: { type: 'string', title: 'Topic' } } })
+]
+
+// Option 2: Explicit per-trigger wallet override
+triggers: [
+  triggers.x402({ name: 'Pipeline', price: '0.10', walletAddress: '0x...custom-payout-address' })
+]
 ```
 
 Paywall URL: `https://platform.openserv.ai/workspace/paywall/${trigger.token}`
@@ -158,12 +170,17 @@ const result = await client.payments.payWorkflow({
 
 ---
 
-## Monitoring & Cleanup
+## Managing Workspaces
 
 ```typescript
 // Check status
 const workflow = await client.workflows.get({ id: workflowId })
 const tasks = await client.tasks.list({ workflowId })
+
+// Add an agent to an existing workspace
+await workflow.addAgent(456)
+// or
+await client.workflows.addAgent({ id: workflowId, agentId: 456 })
 
 // Delete
 await client.workflows.delete({ id: workflowId })
@@ -183,3 +200,6 @@ Complete examples in `examples/`:
 - `video-content-factory.md` - Research → script → video
 - `crypto-alpha-pipeline.md` - Market analysis workflow
 - `polymarket-intelligence.md` - Prediction market analysis
+- `podcast-production-line.md` - Research → essay → podcast
+- `tokenomics-design-pipeline.md` - Token utility → model → whitepaper
+- `paid-image-pipeline.md` - x402 paid 2-agent pipeline with `provision()`

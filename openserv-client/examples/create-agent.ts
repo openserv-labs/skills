@@ -5,7 +5,7 @@
  * Run with: npx tsx create-agent.ts
  */
 import 'dotenv/config'
-import { PlatformClient, triggers, triggerConfigToProps } from '@openserv-labs/client'
+import { PlatformClient, triggers } from '@openserv-labs/client'
 
 async function createAgent() {
   // Initialize client
@@ -46,15 +46,16 @@ async function createAgent() {
     workflowId: workflow.id,
     name: 'API Endpoint',
     integrationConnectionId: connId,
-    props: triggerConfigToProps(
-      triggers.webhook({
-        waitForCompletion: true,
-        timeout: 180,
-        input: {
-          data: { type: 'string', title: 'Input Data' }
-        }
-      })
-    )
+    props: {
+      waitForCompletion: true,
+      timeout: 180,
+      inputSchema: {
+        $schema: 'http://json-schema.org/draft-07/schema#',
+        type: 'object',
+        properties: { data: { type: 'string', title: 'Input Data' } },
+        required: ['data']
+      }
+    }
   })
   console.log(`✅ Created trigger: ${trigger.id}`)
 

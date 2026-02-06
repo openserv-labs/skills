@@ -207,8 +207,29 @@ All tokens are deployed on **Base Mainnet** (chainId: 8453).
 
 ---
 
+## Updating This Skill
+
+This skill may be outdated. The OpenServ team ships updates regularly—new features, API changes, and bug fixes won't be reflected here until you update. **If something isn't working as expected, or you want to make sure you have the latest information, update the skill before proceeding.**
+
+```bash
+# Check if updates are available
+npx skills check
+
+# Update all installed skills to latest versions
+npx skills update
+```
+
+Or reinstall the OpenServ skills directly:
+
+```bash
+npx skills add openserv-labs/skills
+```
+
+---
+
 ## Related Skills
 
 - **openserv-agent-sdk** - Build agents with token launch capabilities
 - **openserv-client** - Provision and deploy agents on the platform
+- **openserv-multi-agent-workflows** - Multi-agent collaboration patterns
 - **openserv-ideaboard-api** - Find ideas and ship token-related services

@@ -125,6 +125,9 @@ await client.workflows.delete({ id: 789 })
 
 // Set workflow to running state
 await client.workflows.setRunning({ id: 789 })
+
+// Add an agent to an existing workspace
+await client.workflows.addAgent({ id: 789, agentId: 456 })
 ```
 
 ### Declarative Workflow Sync
@@ -132,7 +135,7 @@ await client.workflows.setRunning({ id: 789 })
 ```typescript
 await client.workflows.sync({
   id: 789,
-  triggers: [{ name: 'api', type: 'webhook' }],
+  triggers: [triggers.webhook({ name: 'api' })],
   tasks: [
     { name: 'process', agentId: 123, description: 'Process the data' },
     { name: 'report', agentId: 456, description: 'Generate report' }
@@ -144,14 +147,14 @@ await client.workflows.sync({
 })
 ```
 
-### Branching Workflows with Output Options (v1.1.3+)
+### Branching Workflows with Output Options
 
 Tasks can define multiple output options for branching logic:
 
 ```typescript
 await client.workflows.sync({
   id: 789,
-  triggers: [{ name: 'webhook', type: 'webhook' }],
+  triggers: [triggers.webhook({ name: 'webhook' })],
   tasks: [
     {
       name: 'review',
@@ -192,10 +195,14 @@ workflow.status // 'draft', 'running', etc.
 workflow.triggers
 workflow.tasks
 workflow.edges
+workflow.agents // Array of agents in the workspace
 
+await workflow.addAgent(456)   // Add an agent to the workspace
 await workflow.sync({ tasks: [...] })
 await workflow.setRunning()
 ```
+
+> **Note:** `sync()` automatically adds any agents referenced in tasks that aren't already in the workspace. You only need to call `addAgent()` explicitly if you want to add an agent without assigning it to a task.
 
 ---
 
@@ -210,7 +217,7 @@ const trigger = await client.triggers.create({
   workflowId: 789,
   name: 'API Endpoint',
   integrationConnectionId: connId,
-  props: triggerConfigToProps(triggers.webhook({ waitForCompletion: true }))
+  props: { waitForCompletion: true, timeout: 180 }
 })
 
 // Get trigger (includes token)
@@ -253,6 +260,40 @@ const x402Url = `https://api.openserv.ai/x402/trigger/${trigger.token}`
 
 // Paywall page (x402 only)
 const paywallUrl = `https://platform.openserv.ai/workspace/paywall/${trigger.token}`
+```
+
+### x402 Wallet Address Resolution
+
+x402 triggers require an `x402WalletAddress` for payout. When using `workflows.create()`, `workflow.sync()`, or `provision()`, this is resolved automatically via a fallback chain:
+
+1. **`x402WalletAddress` on the trigger config** -- per-trigger override (highest priority)
+2. **`client.walletAddress`** -- set automatically by `client.authenticate(privateKey)`
+3. **`process.env.WALLET_PRIVATE_KEY`** -- address derived from the env variable
+
+```typescript
+// Per-trigger override (different triggers, different wallets):
+triggers: [
+  triggers.x402({ price: '0.01', walletAddress: '0x...custom-payout-address' })
+]
+```
+
+`client.resolveWalletAddress()` returns the resolved address (or `undefined` if no wallet is available).
+
+### agentIds Derivation
+
+`WorkflowConfig.agentIds` is optional. If omitted, agent IDs are derived from `tasks[].agentId`. If provided, they are merged with task-derived IDs:
+
+```typescript
+// No explicit agentIds -- derived from tasks automatically
+const workflow = await client.workflows.create({
+  name: 'Pipeline',
+  goal: 'Process data',
+  tasks: [
+    { name: 'step1', agentId: 123, description: 'First step' },
+    { name: 'step2', agentId: 456, description: 'Second step' }
+  ]
+})
+// Workspace automatically includes agents 123 and 456
 ```
 
 ---

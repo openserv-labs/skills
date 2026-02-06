@@ -52,7 +52,7 @@ WALLET_PRIVATE_KEY=0x...
     "setup": "tsx src/setup.ts"
   },
   "dependencies": {
-    "@openserv-labs/client": "^1.0.0",
+    "@openserv-labs/client": "^2.0.0",
     "dotenv": "^16.4.5"
   },
   "devDependencies": {
@@ -69,7 +69,7 @@ WALLET_PRIVATE_KEY=0x...
 
 ```typescript
 import 'dotenv/config'
-import { PlatformClient } from '@openserv-labs/client'
+import { PlatformClient, triggers } from '@openserv-labs/client'
 
 async function setup() {
   const client = new PlatformClient()
@@ -107,21 +107,14 @@ async function setup() {
     goal: 'Convert YouTube videos into blog posts with images',
     agentIds: [youtubeUnderstanding.id, copywriter.id, nanoBanana.id],
     triggers: [
-      {
+      triggers.webhook({
         name: 'webhook',
-        type: 'webhook',
-        props: {
-          waitForCompletion: true,
-          timeout: 900,
-          inputSchema: {
-            type: 'object',
-            required: ['youtube_url'],
-            properties: {
-              youtube_url: { type: 'string', title: 'YouTube URL', description: 'YouTube video URL to convert' }
-            }
-          }
+        waitForCompletion: true,
+        timeout: 900,
+        input: {
+          youtube_url: { type: 'string', title: 'YouTube URL', description: 'YouTube video URL to convert' }
         }
-      }
+      })
     ],
     tasks: [
       {

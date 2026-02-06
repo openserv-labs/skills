@@ -58,7 +58,7 @@ WALLET_PRIVATE_KEY=0x...
     "setup": "tsx src/setup.ts"
   },
   "dependencies": {
-    "@openserv-labs/client": "^1.0.0",
+    "@openserv-labs/client": "^2.0.0",
     "dotenv": "^16.4.5"
   },
   "devDependencies": {
@@ -73,7 +73,7 @@ WALLET_PRIVATE_KEY=0x...
 
 ```typescript
 import 'dotenv/config'
-import { PlatformClient } from '@openserv-labs/client'
+import { PlatformClient, triggers } from '@openserv-labs/client'
 
 async function setup() {
   const client = new PlatformClient()
@@ -121,52 +121,43 @@ async function setup() {
     agentIds: [researcher.id, coach.id, analyst.id, planner.id, writer.id],
     // Define the complete workflow declaratively
     triggers: [
-      {
+      triggers.webhook({
         name: 'life-coaching-trigger',
-        type: 'webhook',
-        props: {
-          waitForCompletion: true,
-          timeout: 900, // 15 minutes for 6 sequential tasks
-          // Comprehensive input schema for client intake
-          inputSchema: {
-            type: 'object',
-            $schema: 'http://json-schema.org/draft-07/schema#',
-            required: ['clientName', 'currentSituation', 'goals', 'obstacles', 'timeframe', 'coachingStyle'],
-            properties: {
-              clientName: {
-                type: 'string',
-                title: 'Client Name',
-                description: 'Name of the coaching client'
-              },
-              currentSituation: {
-                type: 'string',
-                title: 'Current Situation',
-                description: 'Briefly describe current life situation'
-              },
-              goals: {
-                type: 'string',
-                title: 'Goals',
-                description: 'Primary goals the client wants to achieve'
-              },
-              obstacles: {
-                type: 'string',
-                title: 'Obstacles',
-                description: 'Key challenges or obstacles'
-              },
-              timeframe: {
-                type: 'string',
-                title: 'Timeframe',
-                description: 'Target timeline for progress'
-              },
-              coachingStyle: {
-                type: 'string',
-                title: 'Preferred Coaching Style',
-                description: 'Supportive, direct, structured, or exploratory'
-              }
-            }
+        waitForCompletion: true,
+        timeout: 900, // 15 minutes for 6 sequential tasks
+        input: {
+          clientName: {
+            type: 'string',
+            title: 'Client Name',
+            description: 'Name of the coaching client'
+          },
+          currentSituation: {
+            type: 'string',
+            title: 'Current Situation',
+            description: 'Briefly describe current life situation'
+          },
+          goals: {
+            type: 'string',
+            title: 'Goals',
+            description: 'Primary goals the client wants to achieve'
+          },
+          obstacles: {
+            type: 'string',
+            title: 'Obstacles',
+            description: 'Key challenges or obstacles'
+          },
+          timeframe: {
+            type: 'string',
+            title: 'Timeframe',
+            description: 'Target timeline for progress'
+          },
+          coachingStyle: {
+            type: 'string',
+            title: 'Preferred Coaching Style',
+            description: 'Supportive, direct, structured, or exploratory'
           }
         }
-      }
+      })
     ],
     tasks: [
       {

@@ -35,6 +35,27 @@ await client.triggers.create({
 
 ---
 
+## Adding agents to an existing workspace
+
+When you `sync()` or re-provision a workflow with tasks assigned to agents not yet in the workspace, the client library automatically adds them. You can also add agents explicitly:
+
+```typescript
+// Automatic: sync() adds missing agents before syncing
+await workflow.sync({
+  tasks: [
+    { name: 'task1', agentId: existingAgent, description: '...' },
+    { name: 'task2', agentId: newAgent, description: '...' }  // added automatically
+  ]
+})
+
+// Explicit: add an agent without assigning a task
+await workflow.addAgent(456)
+// or
+await client.workflows.addAgent({ id: workflowId, agentId: 456 })
+```
+
+---
+
 ## Edges not created
 
 Edges link triggers to tasks in the workflow graph. They can be:

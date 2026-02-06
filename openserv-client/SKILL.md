@@ -114,7 +114,7 @@ See `reference.md` for full API documentation on:
 Use the `triggers` factory for type-safe trigger configuration:
 
 ```typescript
-import { triggers, triggerConfigToProps } from '@openserv-labs/client'
+import { triggers } from '@openserv-labs/client'
 
 // Webhook (free, public endpoint)
 triggers.webhook({
@@ -244,7 +244,28 @@ clearProvisionedState()
 
 ---
 
+## Updating This Skill
+
+This skill may be outdated. The OpenServ team ships updates regularly—new features, API changes, and bug fixes won't be reflected here until you update. **If something isn't working as expected, or you want to make sure you have the latest information, update the skill before proceeding.**
+
+```bash
+# Check if updates are available
+npx skills check
+
+# Update all installed skills to latest versions
+npx skills update
+```
+
+Or reinstall the OpenServ skills directly:
+
+```bash
+npx skills add openserv-labs/skills
+```
+
+---
+
 ## Related Skills
 
 - **openserv-agent-sdk** - Building agents with capabilities
 - **openserv-multi-agent-workflows** - Multi-agent collaboration patterns
+- **openserv-launch** - Launch tokens on Base blockchain

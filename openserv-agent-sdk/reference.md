@@ -109,6 +109,35 @@ triggers.cron({ schedule: '0 9 * * *' })
 triggers.manual()
 ```
 
+## Multi-Agent Provision
+
+`provision()` supports multi-agent workflows via `tasks` array and optional `agentIds`:
+
+```typescript
+const result = await provision({
+  agent: { instance: agent, name: 'my-agent', description: '...' },
+  workflow: {
+    name: 'default',
+    trigger: triggers.x402({ name: 'Service', price: '0.01' }),
+    tasks: [
+      { name: 'step-1', description: 'First step' }, // assigned to provisioned agent
+      { name: 'step-2', description: 'Second step', agentId: 1044 } // marketplace agent
+    ]
+    // edges auto-generated: trigger -> step-1 -> step-2
+    // agentIds auto-derived from tasks
+    // x402WalletAddress auto-injected from wallet
+  }
+})
+```
+
+- `task` (single) still works for backward compat
+- `tasks` (array) enables multi-agent with per-task `agentId`
+- `edges` are auto-generated sequentially if omitted
+- `agentIds` are derived from tasks; explicit list adds extras (observers)
+- x402 wallet address resolved automatically
+
+See `openserv-multi-agent-workflows/examples/paid-image-pipeline.md` for a complete example.
+
 ## Agent Methods
 
 ```typescript

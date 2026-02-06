@@ -52,7 +52,7 @@ WALLET_PRIVATE_KEY=0x...
     "setup": "tsx src/setup.ts"
   },
   "dependencies": {
-    "@openserv-labs/client": "^1.0.0",
+    "@openserv-labs/client": "^2.0.0",
     "dotenv": "^16.4.5"
   },
   "devDependencies": {
@@ -67,7 +67,7 @@ WALLET_PRIVATE_KEY=0x...
 
 ```typescript
 import 'dotenv/config'
-import { PlatformClient } from '@openserv-labs/client'
+import { PlatformClient, triggers } from '@openserv-labs/client'
 
 async function setup() {
   const client = new PlatformClient()
@@ -105,21 +105,14 @@ async function setup() {
     goal: 'Fetch prediction market data, analyze trends, produce intelligence reports',
     agentIds: [orderHistory.id, dataAnalysis.id, copywriter.id],
     triggers: [
-      {
+      triggers.webhook({
         name: 'webhook',
-        type: 'webhook',
-        props: {
-          waitForCompletion: true,
-          timeout: 600,
-          inputSchema: {
-            type: 'object',
-            required: ['market_id'],
-            properties: {
-              market_id: { type: 'string', title: 'Market ID', description: 'Polymarket market ID to analyze' }
-            }
-          }
+        waitForCompletion: true,
+        timeout: 600,
+        input: {
+          market_id: { type: 'string', title: 'Market ID', description: 'Polymarket market ID to analyze' }
         }
-      }
+      })
     ],
     tasks: [
       {

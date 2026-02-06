@@ -229,6 +229,26 @@ See `troubleshooting.md` for common issues and solutions.
 
 ---
 
+## Updating This Skill
+
+This skill may be outdated. The OpenServ team ships updates regularly—new features, API changes, and bug fixes won't be reflected here until you update. **If something isn't working as expected, or you want to make sure you have the latest information, update the skill before proceeding.**
+
+```bash
+# Check if updates are available
+npx skills check
+
+# Update all installed skills to latest versions
+npx skills update
+```
+
+Or reinstall the OpenServ skills directly:
+
+```bash
+npx skills add openserv-labs/skills
+```
+
+---
+
 ## Related Skills
 
 - **openserv-agent-sdk** - Build AI agents that can interact with the Ideaboard

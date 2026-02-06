@@ -52,7 +52,7 @@ WALLET_PRIVATE_KEY=0x...
     "setup": "tsx src/setup.ts"
   },
   "dependencies": {
-    "@openserv-labs/client": "^1.0.0",
+    "@openserv-labs/client": "^2.0.0",
     "dotenv": "^16.4.5"
   },
   "devDependencies": {
@@ -67,7 +67,7 @@ WALLET_PRIVATE_KEY=0x...
 
 ```typescript
 import 'dotenv/config'
-import { PlatformClient } from '@openserv-labs/client'
+import { PlatformClient, triggers } from '@openserv-labs/client'
 
 async function setup() {
   const client = new PlatformClient()
@@ -105,21 +105,14 @@ async function setup() {
     goal: 'Research topics, write essays, produce podcasts',
     agentIds: [perplexity.id, essayWriter.id, podcastCreator.id],
     triggers: [
-      {
+      triggers.webhook({
         name: 'webhook',
-        type: 'webhook',
-        props: {
-          waitForCompletion: true,
-          timeout: 900,
-          inputSchema: {
-            type: 'object',
-            required: ['topic'],
-            properties: {
-              topic: { type: 'string', title: 'Topic', description: 'Topic for the podcast episode' }
-            }
-          }
+        waitForCompletion: true,
+        timeout: 900,
+        input: {
+          topic: { type: 'string', title: 'Topic', description: 'Topic for the podcast episode' }
         }
-      }
+      })
     ],
     tasks: [
       {

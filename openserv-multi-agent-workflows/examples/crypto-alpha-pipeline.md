@@ -52,7 +52,7 @@ WALLET_PRIVATE_KEY=0x...
     "setup": "tsx src/setup.ts"
   },
   "dependencies": {
-    "@openserv-labs/client": "^1.0.0",
+    "@openserv-labs/client": "^2.0.0",
     "dotenv": "^16.4.5"
   },
   "devDependencies": {
@@ -69,7 +69,7 @@ WALLET_PRIVATE_KEY=0x...
 
 ```typescript
 import 'dotenv/config'
-import { PlatformClient } from '@openserv-labs/client'
+import { PlatformClient, triggers } from '@openserv-labs/client'
 
 async function setup() {
   const client = new PlatformClient()
@@ -107,21 +107,14 @@ async function setup() {
     goal: 'Fetch crypto metrics, analyze trends, produce investment reports',
     agentIds: [lunarCrush.id, dataAnalyst.id, copywriter.id],
     triggers: [
-      {
+      triggers.webhook({
         name: 'webhook',
-        type: 'webhook',
-        props: {
-          waitForCompletion: true,
-          timeout: 600,
-          inputSchema: {
-            type: 'object',
-            required: ['symbol'],
-            properties: {
-              symbol: { type: 'string', title: 'Crypto Symbol', description: 'Cryptocurrency symbol (e.g., BTC, ETH)' }
-            }
-          }
+        waitForCompletion: true,
+        timeout: 600,
+        input: {
+          symbol: { type: 'string', title: 'Crypto Symbol', description: 'Cryptocurrency symbol (e.g., BTC, ETH)' }
         }
-      }
+      })
     ],
     tasks: [
       {

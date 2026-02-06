@@ -52,7 +52,7 @@ WALLET_PRIVATE_KEY=0x...
     "setup": "tsx src/setup.ts"
   },
   "dependencies": {
-    "@openserv-labs/client": "^1.0.0",
+    "@openserv-labs/client": "^2.0.0",
     "dotenv": "^16.4.5"
   },
   "devDependencies": {
@@ -67,7 +67,7 @@ WALLET_PRIVATE_KEY=0x...
 
 ```typescript
 import 'dotenv/config'
-import { PlatformClient } from '@openserv-labs/client'
+import { PlatformClient, triggers } from '@openserv-labs/client'
 
 async function setup() {
   const client = new PlatformClient()
@@ -107,27 +107,18 @@ async function setup() {
     agentIds: [researcher.id, writer.id, imageAgent.id],
     // Define the complete workflow declaratively
     triggers: [
-      {
+      triggers.webhook({
         name: 'content-request',
-        type: 'webhook',
-        props: {
-          waitForCompletion: true,
-          timeout: 600,
-          // ⚠️ IMPORTANT: Always define inputSchema when using {{trigger.fieldName}} in task inputs
-          inputSchema: {
-            type: 'object',
-            $schema: 'http://json-schema.org/draft-07/schema#',
-            required: ['topic'],
-            properties: {
-              topic: {
-                type: 'string',
-                title: 'Topic',
-                description: 'The topic to research and create content about'
-              }
-            }
+        waitForCompletion: true,
+        timeout: 600,
+        input: {
+          topic: {
+            type: 'string',
+            title: 'Topic',
+            description: 'The topic to research and create content about'
           }
         }
-      }
+      })
     ],
     tasks: [
       {

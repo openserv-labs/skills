@@ -87,6 +87,57 @@ If edges are missing, tasks will never execute even if dependencies are set corr
 
 ---
 
+## "Assignee agent not found in workspace"
+
+This error means a task references an agent that isn't a member of the workspace.
+
+**With `workflows.create()`:** This should not happen -- `agentIds` are automatically derived from `tasks[].agentId`. Every agent referenced in a task is included in the workspace. You don't need to specify `agentIds` manually.
+
+```typescript
+// This just works -- agents 123 and 456 are auto-included
+const workflow = await client.workflows.create({
+  name: 'Multi-Agent Pipeline',
+  goal: 'Process requests with multiple agents',
+  triggers: [triggers.webhook({ name: 'api' })],
+  tasks: [
+    { name: 'step-1', agentId: 123, description: 'First step' },
+    { name: 'step-2', agentId: 456, description: 'Second step' }
+  ],
+  edges: [
+    { from: 'trigger:api', to: 'task:step-1' },
+    { from: 'task:step-1', to: 'task:step-2' }
+  ]
+})
+```
+
+**With `workflow.sync()`:** `sync()` automatically adds any agents referenced in tasks that aren't already in the workspace. If you sync a task assigned to a new agent, that agent is added to the workspace before the sync happens. You can also add agents explicitly:
+
+```typescript
+await workflow.addAgent(789)  // Add agent 789 to the workspace
+// or
+await client.workflows.addAgent({ id: workflowId, agentId: 789 })
+```
+
+**With `provision()`:** Agents are derived from `tasks[].agentId` at creation time, and on re-provision, `sync()` automatically adds any new agents. This is fully idempotent -- you can re-provision with additional agents without recreating the workspace.
+
+---
+
+## "Workspace payout wallet address not found" (x402 triggers)
+
+The x402 trigger needs an `x402WalletAddress` in its props to know where to send payments.
+
+**If using `provision()`:** This is handled automatically via `client.resolveWalletAddress()`.
+
+**If using `workflows.create()` or `workflow.sync()` directly:** Ensure the client was authenticated with a wallet (`client.authenticate(privateKey)`) or that `WALLET_PRIVATE_KEY` is in the environment. The wallet address is auto-injected for x402 triggers. You can also set it explicitly per-trigger:
+
+```typescript
+triggers: [
+  triggers.x402({ price: '0.01', walletAddress: '0x...explicit-payout-address' })
+]
+```
+
+---
+
 ## Integration connection errors
 
 The `workflows.sync()` and `workflows.create()` methods automatically handle integration connection IDs when you provide a trigger `type`. If you're creating triggers manually using the triggers API directly, you need to resolve connection IDs first:
