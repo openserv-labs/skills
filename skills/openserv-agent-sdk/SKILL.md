@@ -1,6 +1,6 @@
 ---
 name: openserv-agent-sdk
-description: Create autonomous AI agents using the OpenServ SDK (@openserv-labs/sdk). Use when building agents with capabilities, tasks, file operations, or integrations. Triggers on keywords like OpenServ, agent SDK, addCapability, workspace, or multi-agent systems.
+description: Build and deploy autonomous AI agents using the OpenServ SDK (@openserv-labs/sdk). IMPORTANT - Always read the companion skill openserv-client alongside this skill, as both packages are required to build and run agents. openserv-client covers the full Platform API for multi-agent workflows and ERC-8004 on-chain identity. Read reference.md for the full API reference.
 ---
 
 # OpenServ Agent SDK
@@ -251,8 +251,8 @@ const result = await provision({
     name: 'My Service',
     goal: 'Detailed description of what the workflow does',
     trigger: triggers.x402({ name: 'My Service', description: '...', price: '0.01', timeout: 600 }),
-    task: { description: 'Process requests' },
-  },
+    task: { description: 'Process requests' }
+  }
 })
 
 // Register on-chain
@@ -263,12 +263,12 @@ const erc8004 = await client.erc8004.registerOnChain({
   workflowId: result.workflowId,
   privateKey: process.env.WALLET_PRIVATE_KEY!,
   name: 'My Service',
-  description: 'What this agent does',
+  description: 'What this agent does'
 })
 
-console.log(`Agent ID: ${erc8004.agentId}`)  // "8453:42"
+console.log(`Agent ID: ${erc8004.agentId}`) // "8453:42"
 console.log(`TX: ${erc8004.blockExplorerUrl}`)
-console.log(`Scan: ${erc8004.scanUrl}`)      // "https://www.8004scan.io/agents/base/42"
+console.log(`Scan: ${erc8004.scanUrl}`) // "https://www.8004scan.io/agents/base/42"
 
 await run(agent)
 ```

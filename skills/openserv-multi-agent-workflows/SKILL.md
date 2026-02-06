@@ -1,6 +1,6 @@
 ---
 name: openserv-multi-agent-workflows
-description: Create workflows with multiple AI agents working together on the OpenServ Platform. Covers agent discovery, multi-agent workspaces, task dependencies, and workflow orchestration using the Platform Client.
+description: Multi-agent workflow examples to work together on the OpenServ Platform. Covers agent discovery, multi-agent workspaces, task dependencies, and workflow orchestration using the Platform Client. Read reference.md for the full API reference. Read openserv-agent-sdk and openserv-client for building and running agents.
 ---
 
 # Multi-Agent Workflows on OpenServ

@@ -1,6 +1,6 @@
 ---
 name: openserv-client
-description: Complete guide to using @openserv-labs/client for managing agents, workflows, triggers, and tasks on the OpenServ Platform. Covers provisioning, authentication, and the full Platform API.
+description: Complete guide to using @openserv-labs/client for managing agents, workflows, triggers, and tasks on the OpenServ Platform. Covers provisioning, authentication, x402 payments, ERC-8004 on-chain identity, and the full Platform API. IMPORTANT - Always read the companion skill openserv-agent-sdk alongside this skill, as both packages are required to build any agent. Read reference.md for the full API reference.
 ---
 
 # OpenServ Client
@@ -222,9 +222,27 @@ clearProvisionedState()
 
 ---
 
-## Firing Triggers
+## Discovering & Firing x402 Services
 
-### Webhook
+### Discover Available Services (No Auth Required)
+
+`discoverServices()` lists all public x402-enabled workflows. **No authentication is needed** — you can call it on a bare `PlatformClient`:
+
+```typescript
+import { PlatformClient } from '@openserv-labs/client'
+
+const client = new PlatformClient() // no API key or wallet needed
+const services = await client.payments.discoverServices()
+
+for (const service of services) {
+  console.log(`${service.name}: $${service.x402Pricing}`)
+  console.log(`URL: ${service.webhookUrl}`)
+}
+```
+
+### Firing Triggers
+
+#### Webhook
 
 ```bash
 curl -X POST https://api.openserv.ai/webhooks/trigger/TOKEN \
@@ -232,7 +250,7 @@ curl -X POST https://api.openserv.ai/webhooks/trigger/TOKEN \
   -d '{"query": "hello world"}'
 ```
 
-### x402 (Programmatic)
+#### x402 (Programmatic)
 
 ```typescript
 const result = await client.payments.payWorkflow({
@@ -269,12 +287,12 @@ const erc8004 = await client.erc8004.registerOnChain({
   workflowId: result.workflowId,
   privateKey: process.env.WALLET_PRIVATE_KEY!,
   name: 'My Agent',
-  description: 'What this agent does',
+  description: 'What this agent does'
 })
 
-console.log(`Agent ID: ${erc8004.agentId}`)         // "8453:42"
+console.log(`Agent ID: ${erc8004.agentId}`) // "8453:42"
 console.log(`Explorer: ${erc8004.blockExplorerUrl}`)
-console.log(`Scan: ${erc8004.scanUrl}`)              // "https://www.8004scan.io/agents/base/42"
+console.log(`Scan: ${erc8004.scanUrl}`) // "https://www.8004scan.io/agents/base/42"
 ```
 
 - **First run** mints a new NFT. **Re-runs update the URI** — agent ID stays the same.

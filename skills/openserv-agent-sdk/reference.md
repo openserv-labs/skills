@@ -172,9 +172,9 @@ async run({ args, action }) {
 ```typescript
 import { PlatformClient } from '@openserv-labs/client'
 
-const client = new PlatformClient()
+const client = new PlatformClient() // no API key or wallet needed for discovery
 
-// Discover x402 services
+// Discover x402 services (no authentication required)
 const services = await client.payments.discoverServices()
 
 // Pay and execute an x402 workflow
@@ -183,7 +183,7 @@ const result = await client.payments.payWorkflow({
   input: { prompt: 'Hello' }
 })
 
-// Get trigger preflight info
+// Get trigger preflight info (no authentication required)
 const preflight = await client.payments.getTriggerPreflight({ token: '...' })
 ```
 

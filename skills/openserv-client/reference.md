@@ -362,16 +362,16 @@ Integration identifiers: `webhook-trigger`, `x402-trigger`, `cron-trigger`, `man
 ## Payments API (x402)
 
 ```typescript
+// Discover x402 services (no authentication required)
+const services = await client.payments.discoverServices()
+
 // Pay and execute an x402 workflow
 const result = await client.payments.payWorkflow({
   triggerUrl: 'https://api.openserv.ai/webhooks/x402/trigger/...',
   input: { prompt: 'Generate a summary' }
 })
 
-// Discover x402 services
-const services = await client.payments.discoverServices()
-
-// Get trigger preflight info
+// Get trigger preflight info (no authentication required)
 const preflight = await client.payments.getTriggerPreflight({ token: '...' })
 ```
 

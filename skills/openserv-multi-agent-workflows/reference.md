@@ -161,6 +161,7 @@ Paywall URL: `https://platform.openserv.ai/workspace/paywall/${trigger.token}`
 ### Calling x402 Programmatically
 
 ```typescript
+// discoverServices() does not require authentication
 const services = await client.payments.discoverServices()
 const result = await client.payments.payWorkflow({
   triggerUrl: services[0].webhookUrl,
