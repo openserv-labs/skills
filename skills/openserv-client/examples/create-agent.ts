@@ -48,7 +48,7 @@ async function createAgent() {
     integrationConnectionId: connId,
     props: {
       waitForCompletion: true,
-      timeout: 180,
+      timeout: 600,
       inputSchema: {
         $schema: 'http://json-schema.org/draft-07/schema#',
         type: 'object',

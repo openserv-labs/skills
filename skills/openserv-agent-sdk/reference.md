@@ -97,7 +97,7 @@ z.array(z.string())
 import { triggers } from '@openserv-labs/client'
 
 // Webhook (free)
-triggers.webhook({ waitForCompletion: true, timeout: 180 })
+triggers.webhook({ waitForCompletion: true, timeout: 600 })
 
 // x402 (paid)
 triggers.x402({
@@ -222,6 +222,7 @@ erc8004.agentId          // "8453:42"
 erc8004.txHash           // "0xabc..."
 erc8004.blockExplorerUrl // "https://basescan.org/tx/..."
 erc8004.agentCardUrl     // IPFS URL
+erc8004.scanUrl          // "https://www.8004scan.io/agents/base/42"
 ```
 
 - First run → `register()` (new mint). Re-runs → `setAgentURI()` (update, same ID).

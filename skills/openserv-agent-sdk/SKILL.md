@@ -66,7 +66,7 @@ my-agent/
   "scripts": { "dev": "tsx src/agent.ts" },
   "dependencies": {
     "@openserv-labs/sdk": "^2.1.0",
-    "@openserv-labs/client": "^2.1.1",
+    "@openserv-labs/client": "^2.1.2",
     "dotenv": "^16.4.5",
     "openai": "^5.0.1",
     "zod": "^3.23.8"

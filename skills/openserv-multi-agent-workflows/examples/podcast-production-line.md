@@ -52,7 +52,7 @@ WALLET_PRIVATE_KEY=0x...
     "setup": "tsx src/setup.ts"
   },
   "dependencies": {
-    "@openserv-labs/client": "^2.1.1",
+    "@openserv-labs/client": "^2.1.2",
     "dotenv": "^16.4.5"
   },
   "devDependencies": {

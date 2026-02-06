@@ -197,7 +197,7 @@ async function main() {
     workflow: {
       name: 'Token Launcher',
       goal: 'Deploy new ERC-20 tokens on Base with Aerodrome concentrated liquidity pools and locked LP positions',
-      trigger: triggers.webhook({ waitForCompletion: true, timeout: 180 })
+      trigger: triggers.webhook({ waitForCompletion: true, timeout: 600 })
     }
   })
 

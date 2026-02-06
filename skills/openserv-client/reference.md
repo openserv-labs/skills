@@ -225,7 +225,7 @@ const trigger = await client.triggers.create({
   workflowId: 789,
   name: 'API Endpoint',
   integrationConnectionId: connId,
-  props: { waitForCompletion: true, timeout: 180 }
+  props: { waitForCompletion: true, timeout: 600 }
 })
 
 // Get trigger (includes token)
@@ -428,13 +428,13 @@ result.blockExplorerUrl // "https://basescan.org/tx/..."
 ### Wallet Management
 
 ```typescript
-const wallet = await client.erc8004.generateWallet({ workflowId })
-const imported = await client.erc8004.importWallet({
-  workflowId, address: '0x...', network: 'base', chainId: 8453, privateKey: '0x...'
+const wallet = await client.workflows.generateWallet({ id: workflowId })
+const imported = await client.workflows.importWallet({
+  id: workflowId, address: '0x...', network: 'base', chainId: 8453, privateKey: '0x...'
 })
-const wallet = await client.erc8004.getWallet({ workflowId })
+const wallet = await client.workflows.getWallet({ id: workflowId })
 // wallet.address, wallet.erc8004AgentId, wallet.deployed
-await client.erc8004.deleteWallet({ workflowId })
+await client.workflows.deleteWallet({ id: workflowId })
 ```
 
 ### Deploy (Low-Level State Management)
@@ -456,14 +456,14 @@ await client.erc8004.deploy({
 
 ```typescript
 // Get callable triggers (used to build agent card)
-const triggers = await client.erc8004.getCallableTriggers({ workflowId })
+const triggers = await client.triggers.getCallableTriggers({ workflowId })
 
 // Presign IPFS upload URL (expires in 60s)
 const { url } = await client.erc8004.presignIpfsUrl({ workflowId })
 
 // Sign feedback auth for reputation system
-const { signature } = await client.erc8004.signFeedbackAuth({
-  workflowId, buyerAddress: '0xBuyer...',
+const { signature } = await client.workflows.signFeedbackAuth({
+  id: workflowId, buyerAddress: '0xBuyer...',
 })
 ```
 
