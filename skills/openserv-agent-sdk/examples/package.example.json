@@ -7,7 +7,7 @@
   },
   "dependencies": {
     "@openserv-labs/sdk": "^2.1.0",
-    "@openserv-labs/client": "^1.1.4",
+    "@openserv-labs/client": "^2.0.0",
     "dotenv": "^16.4.5",
     "openai": "^5.0.1",
     "zod": "^3.23.8"
