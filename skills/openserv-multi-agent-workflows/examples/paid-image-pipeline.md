@@ -40,7 +40,7 @@ WALLET_PRIVATE_KEY=
   "scripts": { "dev": "tsx src/agent.ts" },
   "dependencies": {
     "@openserv-labs/sdk": "^2.1.0",
-    "@openserv-labs/client": "^2.0.0",
+    "@openserv-labs/client": "^2.0.2",
     "dotenv": "^16.4.5",
     "openai": "^5.0.1",
     "zod": "^3.23.8"
@@ -88,7 +88,8 @@ async function main() {
       description: 'Acknowledges messages with "Roger that"'
     },
     workflow: {
-      name: 'default',
+      name: 'Roger That Image',
+      goal: 'Acknowledge user messages and generate a bold, eye-catching "Roger that" image in response',
       trigger: triggers.x402({
         name: 'Roger That Image',
         description: 'Send any message and get a "Roger that" image',

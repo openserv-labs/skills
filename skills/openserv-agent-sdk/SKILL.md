@@ -66,7 +66,7 @@ my-agent/
   "scripts": { "dev": "tsx src/agent.ts" },
   "dependencies": {
     "@openserv-labs/sdk": "^2.1.0",
-    "@openserv-labs/client": "^2.0.0",
+    "@openserv-labs/client": "^2.0.2",
     "dotenv": "^16.4.5",
     "openai": "^5.0.1",
     "zod": "^3.23.8"
@@ -164,6 +164,24 @@ action.integrations // Available integrations
 
 ---
 
+## Workflow Name & Goal
+
+The `workflow` object in `provision()` requires two important properties:
+
+- **`name`** (string) - This becomes the **agent name in ERC-8004**. Make it polished, punchy, and memorable — this is the public-facing brand name users see. Think product launch, not variable name. Examples: `'Crypto Alpha Scanner'`, `'AI Video Studio'`, `'Instant Blog Machine'`.
+- **`goal`** (string, required) - A detailed description of what the workflow accomplishes. Must be descriptive and thorough — short or vague goals will cause API calls to fail. Write at least a full sentence explaining the workflow's purpose.
+
+```typescript
+workflow: {
+  name: 'Haiku Poetry Generator',  // Polished display name — the ERC-8004 agent name users see
+  goal: 'Transform any theme or emotion into a beautiful traditional 5-7-5 haiku poem using AI',
+  trigger: triggers.x402({ ... }),
+  task: { description: 'Generate a haiku about the given topic' }
+}
+```
+
+---
+
 ## Trigger Types
 
 ```typescript
@@ -201,8 +219,13 @@ await provision({
     name: 'my-agent',
     description: '...',
     endpointUrl: 'https://my-agent.example.com' // Required for production
+  },
+  workflow: {
+    name: 'Lightning Service Pro',
+    goal: 'Describe in detail what this workflow does — be thorough, vague goals cause failures',
+    trigger: triggers.webhook({ waitForCompletion: true }),
+    task: { description: 'Process incoming requests' }
   }
-  // ...
 })
 
 await agent.start() // Start without tunnel

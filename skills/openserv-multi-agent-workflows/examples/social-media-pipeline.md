@@ -52,7 +52,7 @@ WALLET_PRIVATE_KEY=0x...
     "setup": "tsx src/setup.ts"
   },
   "dependencies": {
-    "@openserv-labs/client": "^2.0.0",
+    "@openserv-labs/client": "^2.0.2",
     "dotenv": "^16.4.5"
   },
   "devDependencies": {
@@ -103,8 +103,8 @@ async function setup() {
 
   console.log('3. Creating workflow...')
   const workflow = await client.workflows.create({
-    name: 'Social Media Content Pipeline',
-    goal: 'Research topics, create social posts, generate visuals',
+    name: 'Viral Content Engine',
+    goal: 'Research trending topics across the web and social media, create engaging multi-platform social posts, and generate eye-catching visual content',
     agentIds: [grokResearch.id, copywriter.id, nanoBanana.id],
     triggers: [
       triggers.webhook({

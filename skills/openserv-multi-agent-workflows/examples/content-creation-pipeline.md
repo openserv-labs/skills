@@ -52,7 +52,7 @@ WALLET_PRIVATE_KEY=0x...
     "setup": "tsx src/setup.ts"
   },
   "dependencies": {
-    "@openserv-labs/client": "^2.0.0",
+    "@openserv-labs/client": "^2.0.2",
     "dotenv": "^16.4.5"
   },
   "devDependencies": {
@@ -102,8 +102,8 @@ async function setup() {
 
   console.log('3. Creating workflow...')
   const workflow = await client.workflows.create({
-    name: 'Content Creation Pipeline',
-    goal: 'Research topics and create content with visuals',
+    name: 'Creative Powerhouse',
+    goal: 'Research any topic in depth, craft polished written content, and generate professional visuals to complement the article',
     agentIds: [researcher.id, writer.id, imageAgent.id],
     // Define the complete workflow declaratively
     triggers: [

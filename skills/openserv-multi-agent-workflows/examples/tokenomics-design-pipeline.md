@@ -52,7 +52,7 @@ WALLET_PRIVATE_KEY=0x...
     "setup": "tsx src/setup.ts"
   },
   "dependencies": {
-    "@openserv-labs/client": "^2.0.0",
+    "@openserv-labs/client": "^2.0.2",
     "dotenv": "^16.4.5"
   },
   "devDependencies": {
@@ -101,8 +101,8 @@ async function setup() {
 
   console.log('3. Creating workflow...')
   const workflow = await client.workflows.create({
-    name: 'Tokenomics Design Pipeline',
-    goal: 'Design token utilities, build tokenomics models, draft whitepaper content',
+    name: 'Tokenomics Architect',
+    goal: 'Design innovative token utility mechanisms, build a comprehensive tokenomics model with supply and distribution mechanics, and draft professional whitepaper content',
     agentIds: [utilityIdeator.id, tokenomicsArchitect.id, whitepaperCondenser.id],
     triggers: [
       triggers.webhook({

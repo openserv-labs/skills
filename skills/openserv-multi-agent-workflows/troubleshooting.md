@@ -96,8 +96,8 @@ This error means a task references an agent that isn't a member of the workspace
 ```typescript
 // This just works -- agents 123 and 456 are auto-included
 const workflow = await client.workflows.create({
-  name: 'Multi-Agent Pipeline',
-  goal: 'Process requests with multiple agents',
+  name: 'Hyper Agent Relay',
+  goal: 'Route incoming requests through a multi-step agent pipeline for processing and response generation',
   triggers: [triggers.webhook({ name: 'api' })],
   tasks: [
     { name: 'step-1', agentId: 123, description: 'First step' },

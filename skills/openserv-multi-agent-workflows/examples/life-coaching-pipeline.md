@@ -58,7 +58,7 @@ WALLET_PRIVATE_KEY=0x...
     "setup": "tsx src/setup.ts"
   },
   "dependencies": {
-    "@openserv-labs/client": "^2.0.0",
+    "@openserv-labs/client": "^2.0.2",
     "dotenv": "^16.4.5"
   },
   "devDependencies": {
@@ -116,8 +116,8 @@ async function setup() {
 
   console.log('3. Creating workflow...')
   const workflow = await client.workflows.create({
-    name: 'Life Coaching Report',
-    goal: 'Generate a tailored life coaching report and action plan from client intake',
+    name: 'Life Catalyst Pro',
+    goal: 'Assess client goals and challenges, develop personalized coaching strategies across wellness dimensions, and produce a comprehensive life coaching report with an actionable plan',
     agentIds: [researcher.id, coach.id, analyst.id, planner.id, writer.id],
     // Define the complete workflow declaratively
     triggers: [

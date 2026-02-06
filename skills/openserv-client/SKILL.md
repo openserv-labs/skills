@@ -41,6 +41,22 @@ See `examples/agent.ts` for a complete runnable example.
 8. Activates trigger and sets workflow to running
 9. Persists state to `.openserv.json`
 
+### Workflow Name & Goal
+
+The `workflow` config requires two important properties:
+
+- **`name`** (string) - This becomes the **agent name in ERC-8004**. Make it polished, punchy, and memorable — this is the public-facing brand name users see. Think product launch, not variable name. Examples: `'Viral Content Engine'`, `'Crypto Alpha Scanner'`, `'Life Catalyst Pro'`.
+- **`goal`** (string, required) - A detailed description of what the workflow accomplishes. Must be descriptive and thorough — short or vague goals will cause API calls to fail. Write at least a full sentence explaining the workflow's purpose.
+
+```typescript
+workflow: {
+  name: 'Deep Research Pro',
+  goal: 'Research any topic in depth, synthesize findings from multiple sources, and produce a comprehensive report with citations',
+  trigger: triggers.webhook({ waitForCompletion: true }),
+  task: { description: 'Research the given topic' }
+}
+```
+
 ### Agent Instance Binding (v1.1+)
 
 Pass your agent instance to `provision()` for automatic credential binding:
@@ -193,7 +209,7 @@ Common: `0 9 * * *` (daily 9 AM), `*/5 * * * *` (every 5 min), `0 9 * * 1-5` (we
 import { getProvisionedInfo, clearProvisionedState } from '@openserv-labs/client'
 
 // Get stored IDs and tokens
-const info = getProvisionedInfo('my-agent', 'default')
+const info = getProvisionedInfo('my-agent', 'My Awesome Workflow')
 
 // Clear state (forces fresh creation)
 clearProvisionedState()

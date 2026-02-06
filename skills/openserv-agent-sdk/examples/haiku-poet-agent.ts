@@ -67,7 +67,8 @@ async function main() {
       description: 'A poet that creates beautiful haikus on any topic'
     },
     workflow: {
-      name: 'default',
+      name: 'Haiku Poetry Generator',
+      goal: 'Transform any theme or emotion into a beautiful traditional 5-7-5 haiku poem using AI',
       trigger: triggers.x402({
         name: 'Haiku Poetry Generator',
         description: 'Transform any theme into a beautiful traditional haiku poem',

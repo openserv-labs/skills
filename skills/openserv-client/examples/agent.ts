@@ -47,7 +47,8 @@ async function main() {
       description: 'An example assistant agent'
     },
     workflow: {
-      name: 'default',
+      name: 'Instant AI Concierge',
+      goal: 'Receive user requests via webhook, process them with AI, and return helpful responses',
       trigger: triggers.webhook({
         waitForCompletion: true,
         input: { input: { type: 'string', title: 'Your Request' } }

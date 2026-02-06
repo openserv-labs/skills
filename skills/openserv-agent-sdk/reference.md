@@ -47,7 +47,11 @@ async function main() {
       name: 'my-agent',
       description: '...'
     },
-    workflow: { name: 'default', trigger: triggers.webhook({ waitForCompletion: true }) }
+    workflow: {
+      name: 'Welcome Wizard',
+      goal: 'Welcome users by name with a warm, personalized greeting message',
+      trigger: triggers.webhook({ waitForCompletion: true })
+    }
   })
 
   // 4. Run - auto-connects via agents-proxy.openserv.ai (no ngrok needed!)
@@ -117,7 +121,8 @@ triggers.manual()
 const result = await provision({
   agent: { instance: agent, name: 'my-agent', description: '...' },
   workflow: {
-    name: 'default',
+    name: 'Supercharged Service Hub',
+    goal: 'Execute a multi-agent pipeline where each step builds on the previous to deliver a complete service',
     trigger: triggers.x402({ name: 'Service', price: '0.01' }),
     tasks: [
       { name: 'step-1', description: 'First step' }, // assigned to provisioned agent

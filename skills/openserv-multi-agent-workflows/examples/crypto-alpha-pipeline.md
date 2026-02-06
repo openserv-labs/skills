@@ -52,7 +52,7 @@ WALLET_PRIVATE_KEY=0x...
     "setup": "tsx src/setup.ts"
   },
   "dependencies": {
-    "@openserv-labs/client": "^2.0.0",
+    "@openserv-labs/client": "^2.0.2",
     "dotenv": "^16.4.5"
   },
   "devDependencies": {
@@ -103,8 +103,8 @@ async function setup() {
 
   console.log('3. Creating workflow...')
   const workflow = await client.workflows.create({
-    name: 'Crypto Alpha Pipeline',
-    goal: 'Fetch crypto metrics, analyze trends, produce investment reports',
+    name: 'Crypto Alpha Scanner',
+    goal: 'Gather real-time crypto market metrics, perform deep trend and risk analysis, and produce actionable investment intelligence reports',
     agentIds: [lunarCrush.id, dataAnalyst.id, copywriter.id],
     triggers: [
       triggers.webhook({

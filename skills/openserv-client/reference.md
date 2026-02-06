@@ -22,7 +22,8 @@ const result = await provision({
     // endpointUrl: 'https://...' // Optional for dev, required for production
   },
   workflow: {
-    name: 'default',
+    name: 'Instant AI Concierge',
+    goal: 'Receive incoming requests, analyze and process them, and return structured responses',
     trigger: triggers.webhook({ waitForCompletion: true }),
     task: { description: 'Process requests' }
   }
@@ -31,6 +32,13 @@ const result = await provision({
 // result contains: agentId, apiKey, authToken, workflowId, triggerId, etc.
 await run(agent)
 ```
+
+### Workflow Config
+
+- **`name`** (string) - The **agent name in ERC-8004**. Make it polished, punchy, and memorable (e.g., `'Crypto Alpha Scanner'`, `'AI Video Studio'`). This is the brand name users see — not a slug or kebab-case identifier.
+- **`goal`** (string, required) - A detailed description of what the workflow accomplishes. Must be descriptive and thorough — short or vague goals will cause API calls to fail.
+- **`trigger`** - Trigger configuration (use the `triggers` factory)
+- **`task`** / **`tasks`** - Single task shorthand or array for multi-agent workflows
 
 ### Provision Result
 
@@ -102,8 +110,8 @@ await client.agents.saveAuthToken({ id: 123, authTokenHash })
 ```typescript
 // Create a workflow
 const workflow = await client.workflows.create({
-  name: 'Data Pipeline',
-  goal: 'Process and analyze incoming data',
+  name: 'Turbo Data Engine',
+  goal: 'Ingest raw data from multiple sources, process and analyze it, and produce structured insights',
   agentIds: [123, 456]
 })
 
@@ -116,8 +124,8 @@ const workflows = await client.workflows.list()
 // Update a workflow
 await client.workflows.update({
   id: 789,
-  name: 'Updated Pipeline',
-  goal: 'New goal description'
+  name: 'Turbo Data Engine v2',
+  goal: 'Process and analyze incoming data with improved validation and error handling'
 })
 
 // Delete a workflow
@@ -286,8 +294,8 @@ triggers: [
 ```typescript
 // No explicit agentIds -- derived from tasks automatically
 const workflow = await client.workflows.create({
-  name: 'Pipeline',
-  goal: 'Process data',
+  name: 'Smart Data Forge',
+  goal: 'Validate incoming data, transform it through multiple processing steps, and produce structured output',
   tasks: [
     { name: 'step1', agentId: 123, description: 'First step' },
     { name: 'step2', agentId: 456, description: 'Second step' }

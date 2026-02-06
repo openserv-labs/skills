@@ -195,7 +195,8 @@ async function main() {
       description: 'Launch ERC-20 tokens on Base with Aerodrome LP pools'
     },
     workflow: {
-      name: 'default',
+      name: 'Token Launcher',
+      goal: 'Deploy new ERC-20 tokens on Base with Aerodrome concentrated liquidity pools and locked LP positions',
       trigger: triggers.webhook({ waitForCompletion: true, timeout: 180 })
     }
   })

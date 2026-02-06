@@ -52,7 +52,7 @@ WALLET_PRIVATE_KEY=0x...
     "setup": "tsx src/setup.ts"
   },
   "dependencies": {
-    "@openserv-labs/client": "^2.0.0",
+    "@openserv-labs/client": "^2.0.2",
     "dotenv": "^16.4.5"
   },
   "devDependencies": {
@@ -102,7 +102,7 @@ async function setup() {
   console.log('3. Creating workflow...')
   const workflow = await client.workflows.create({
     name: 'Polymarket Intelligence',
-    goal: 'Fetch prediction market data, analyze trends, produce intelligence reports',
+    goal: 'Fetch real-time prediction market data, identify whale activity and sentiment shifts, and produce a comprehensive intelligence report with strategic insights',
     agentIds: [orderHistory.id, dataAnalysis.id, copywriter.id],
     triggers: [
       triggers.webhook({

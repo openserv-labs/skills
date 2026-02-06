@@ -39,7 +39,8 @@ async function main() {
       description: 'A simple greeting agent'
     },
     workflow: {
-      name: 'default',
+      name: 'Welcome Wizard',
+      goal: 'Welcome users by name with a warm, personalized greeting message',
       trigger: triggers.webhook({
         waitForCompletion: true,
         input: {

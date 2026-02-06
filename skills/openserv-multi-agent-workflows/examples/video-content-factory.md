@@ -52,7 +52,7 @@ WALLET_PRIVATE_KEY=0x...
     "setup": "tsx src/setup.ts"
   },
   "dependencies": {
-    "@openserv-labs/client": "^2.0.0",
+    "@openserv-labs/client": "^2.0.2",
     "dotenv": "^16.4.5"
   },
   "devDependencies": {
@@ -101,8 +101,8 @@ async function setup() {
 
   console.log('3. Creating workflow...')
   const workflow = await client.workflows.create({
-    name: 'Video Content Factory',
-    goal: 'Research topics, write scripts, generate AI videos',
+    name: 'AI Video Studio',
+    goal: 'Research any topic in depth, craft a compelling video script, and produce a high-quality AI-generated video with audio',
     agentIds: [research.id, copywriter.id, veo.id],
     triggers: [
       triggers.webhook({

@@ -50,7 +50,7 @@ WALLET_PRIVATE_KEY=0x...
     "setup": "tsx src/setup.ts"
   },
   "dependencies": {
-    "@openserv-labs/client": "^2.0.0",
+    "@openserv-labs/client": "^2.0.2",
     "dotenv": "^16.4.5"
   },
   "devDependencies": {
@@ -100,8 +100,8 @@ async function setup() {
 
   console.log('3. Creating workflow...')
   const workflow = await client.workflows.create({
-    name: 'Blog Post Pipeline',
-    goal: 'Research topics and produce blog posts',
+    name: 'Instant Blog Machine',
+    goal: 'Research any topic thoroughly using web sources and produce a well-structured, publication-ready blog post',
     agentIds: [grokResearch.id, copywriter.id]
   })
 
@@ -188,8 +188,8 @@ async function setup() {
 
   // Create workflow
   const workflow = await client.workflows.create({
-    name: 'Blog Post Pipeline',
-    goal: 'Research topics and produce blog posts',
+    name: 'Instant Blog Machine',
+    goal: 'Research any topic thoroughly using web sources and produce a well-structured, publication-ready blog post',
     agentIds: [grokResearch.id, copywriter.id]
   })
 

@@ -34,8 +34,8 @@ async function createAgent() {
 
   // Create workflow
   const workflow = await client.workflows.create({
-    name: 'My Workflow',
-    goal: 'Process incoming requests',
+    name: 'Instant AI Concierge',
+    goal: 'Receive incoming requests, analyze and process them with AI, and return structured responses',
     agentIds: [agent.id]
   })
   console.log(`✅ Created workflow: ${workflow.id}`)

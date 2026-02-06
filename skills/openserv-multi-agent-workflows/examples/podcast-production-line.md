@@ -52,7 +52,7 @@ WALLET_PRIVATE_KEY=0x...
     "setup": "tsx src/setup.ts"
   },
   "dependencies": {
-    "@openserv-labs/client": "^2.0.0",
+    "@openserv-labs/client": "^2.0.2",
     "dotenv": "^16.4.5"
   },
   "devDependencies": {
@@ -102,7 +102,7 @@ async function setup() {
   console.log('3. Creating workflow...')
   const workflow = await client.workflows.create({
     name: 'Podcast Production Line',
-    goal: 'Research topics, write essays, produce podcasts',
+    goal: 'Research any topic thoroughly, write an engaging narrative essay, and produce a professional podcast episode with AI-generated narration',
     agentIds: [perplexity.id, essayWriter.id, podcastCreator.id],
     triggers: [
       triggers.webhook({

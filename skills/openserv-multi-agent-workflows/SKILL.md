@@ -36,6 +36,15 @@ See `examples/` for complete runnable examples:
 
 ---
 
+## Workflow Name & Goal
+
+When creating workflows (via `workflows.create()` or `provision()`), two properties are critical:
+
+- **`name`** (string) - This becomes the **agent name in ERC-8004**. Make it polished, punchy, and memorable — this is the public-facing brand name users see. Think product launch, not variable name. Examples: `'Instant Blog Machine'`, `'AI Video Studio'`, `'Polymarket Intelligence'`.
+- **`goal`** (string, required) - A detailed description of what the workflow accomplishes. Must be descriptive and thorough — short or vague goals will cause API calls to fail. Write at least a full sentence explaining the end-to-end purpose of the workflow.
+
+---
+
 ## Core Concepts
 
 ### Workflows
