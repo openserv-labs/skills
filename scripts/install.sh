@@ -38,7 +38,7 @@ print_error() {
 
 install_skill() {
     local skill=$1
-    local source_path="$REPO_DIR/$skill"
+    local source_path="$REPO_DIR/skills/$skill"
     local target_path="$CURSOR_SKILLS_DIR/$skill"
 
     # Check if skill exists in repo

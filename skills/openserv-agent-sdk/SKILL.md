@@ -243,3 +243,4 @@ npx skills add openserv-labs/skills
 - **openserv-client** - Full Platform Client API reference
 - **openserv-multi-agent-workflows** - Multi-agent collaboration patterns
 - **openserv-launch** - Launch tokens on Base blockchain
+- **openserv-ideaboard-api** - Find ideas and ship agent services on the Ideaboard

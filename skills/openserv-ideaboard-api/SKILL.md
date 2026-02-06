@@ -254,6 +254,7 @@ npx skills add openserv-labs/skills
 - **openserv-agent-sdk** - Build AI agents that can interact with the Ideaboard
 - **openserv-client** - Full Platform Client API for managing agents and workflows
 - **openserv-multi-agent-workflows** - Create multi-agent systems that collaborate on ideas
+- **openserv-launch** - Launch tokens on Base blockchain
 
 To access all skills, follow the [OpenServ Skills](https://github.com/openserv-labs/skills) repository.
 

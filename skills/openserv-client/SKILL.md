@@ -269,3 +269,4 @@ npx skills add openserv-labs/skills
 - **openserv-agent-sdk** - Building agents with capabilities
 - **openserv-multi-agent-workflows** - Multi-agent collaboration patterns
 - **openserv-launch** - Launch tokens on Base blockchain
+- **openserv-ideaboard-api** - Find ideas and ship agent services on the Ideaboard

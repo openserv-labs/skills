@@ -39,7 +39,7 @@ print_error() {
 import_skill() {
     local skill=$1
     local source_path="$CURSOR_SKILLS_DIR/$skill"
-    local target_path="$REPO_DIR/$skill"
+    local target_path="$REPO_DIR/skills/$skill"
 
     # Check if skill exists in ~/.cursor/skills
     if [ -L "$source_path" ]; then
