@@ -40,7 +40,7 @@ WALLET_PRIVATE_KEY=
   "scripts": { "dev": "tsx src/agent.ts" },
   "dependencies": {
     "@openserv-labs/sdk": "^2.1.0",
-    "@openserv-labs/client": "^2.0.2",
+    "@openserv-labs/client": "^2.1.1",
     "dotenv": "^16.4.5",
     "openai": "^5.0.1",
     "zod": "^3.23.8"
@@ -94,6 +94,7 @@ async function main() {
         name: 'Roger That Image',
         description: 'Send any message and get a "Roger that" image',
         price: '0.01',
+        timeout: 600,
         input: {
           message: {
             type: 'string',
@@ -142,6 +143,34 @@ main().catch(console.error)
 5. Sequential edges are auto-generated: trigger -> acknowledge -> generate-image
 6. `run(agent)` starts the local agent with built-in tunnel
 
+## Adding ERC-8004 On-Chain Registration
+
+Add on-chain identity after provisioning so the agent is discoverable via the Identity Registry:
+
+```typescript
+import { PlatformClient } from '@openserv-labs/client'
+
+// ... after provision(), before run():
+
+const client = new PlatformClient()
+await client.authenticate(process.env.WALLET_PRIVATE_KEY)
+
+const erc8004 = await client.erc8004.registerOnChain({
+  workflowId: result.workflowId,
+  privateKey: process.env.WALLET_PRIVATE_KEY!,
+  name: 'Roger That Image',
+  description: 'Send any message and get a "Roger that" image',
+})
+
+console.log(`ERC-8004 Agent ID: ${erc8004.agentId}`)
+console.log(`Block Explorer: ${erc8004.blockExplorerUrl}`)
+console.log(`Scan: ${erc8004.scanUrl}`)
+
+await run(agent)
+```
+
+**Re-runs update the agent card URI** — the agent ID stays the same. Never clear the wallet state unless you intentionally want a new on-chain identity.
+
 ## Key Points
 
 1. **No manual wallet injection**: `provision()` handles `x402WalletAddress` automatically via `client.resolveWalletAddress()`
@@ -149,3 +178,4 @@ main().catch(console.error)
 3. **No manual edges**: Sequential edges are auto-generated when no explicit edges are provided
 4. **Backward compatible**: The `task` shorthand (single task) still works for simple agents
 5. **Idempotent**: Re-running `npm run dev` updates the existing workflow via `sync()` rather than creating duplicates
+6. **ERC-8004 re-deploy**: `registerOnChain` detects existing agent and calls `setAgentURI` instead of minting new

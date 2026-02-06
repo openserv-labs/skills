@@ -396,6 +396,122 @@ await client.web3.verifyUsdcTransaction({
 
 ---
 
+## ERC-8004 API
+
+On-chain agent identity registration via the Identity Registry contract.
+
+### Register On-Chain (High-Level)
+
+```typescript
+const client = new PlatformClient()
+await client.authenticate(process.env.WALLET_PRIVATE_KEY)
+
+const result = await client.erc8004.registerOnChain({
+  workflowId: 123,
+  privateKey: process.env.WALLET_PRIVATE_KEY!,
+  chainId: 8453,                          // Default: Base mainnet
+  rpcUrl: 'https://mainnet.base.org',     // Default
+  name: 'My Agent',
+  description: 'What this agent does',
+})
+
+result.agentId          // "8453:42" (chainId:tokenId)
+result.ipfsCid          // "bafkrei..."
+result.txHash           // "0xabc..."
+result.agentCardUrl     // "https://gateway.pinata.cloud/ipfs/..."
+result.blockExplorerUrl // "https://basescan.org/tx/..."
+```
+
+**First run:** mints NFT via `register()` → uploads agent card to IPFS → sets token URI.
+**Re-runs:** detects existing `erc8004AgentId` → uploads updated card → calls `setAgentURI()`. **Agent ID stays the same.**
+
+### Wallet Management
+
+```typescript
+const wallet = await client.erc8004.generateWallet({ workflowId })
+const imported = await client.erc8004.importWallet({
+  workflowId, address: '0x...', network: 'base', chainId: 8453, privateKey: '0x...'
+})
+const wallet = await client.erc8004.getWallet({ workflowId })
+// wallet.address, wallet.erc8004AgentId, wallet.deployed
+await client.erc8004.deleteWallet({ workflowId })
+```
+
+### Deploy (Low-Level State Management)
+
+```typescript
+// Save or clear deployment state
+await client.erc8004.deploy({
+  workflowId,
+  erc8004AgentId: '8453:42',       // or '' to clear stale state
+  stringifiedAgentCard: JSON.stringify(agentCard),
+  walletAddress: '0x...',
+  network: 'base',
+  chainId: 8453,
+  rpcUrl: 'https://mainnet.base.org',
+})
+```
+
+### Other Methods
+
+```typescript
+// Get callable triggers (used to build agent card)
+const triggers = await client.erc8004.getCallableTriggers({ workflowId })
+
+// Presign IPFS upload URL (expires in 60s)
+const { url } = await client.erc8004.presignIpfsUrl({ workflowId })
+
+// Sign feedback auth for reputation system
+const { signature } = await client.erc8004.signFeedbackAuth({
+  workflowId, buyerAddress: '0xBuyer...',
+})
+```
+
+### Chain Configuration Helpers
+
+```typescript
+import { listErc8004ChainIds, getErc8004Chain } from '@openserv-labs/client'
+
+const mainnets = listErc8004ChainIds('mainnet')  // [1, 8453, 137, 42161, ...]
+const testnets = listErc8004ChainIds('testnet')  // [11155111, 84532, ...]
+
+const base = getErc8004Chain(8453)
+base?.contracts.IDENTITY_REGISTRY  // "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432"
+```
+
+### Re-deploy vs Fresh Mint
+
+`registerOnChain` checks the workflow wallet's `erc8004AgentId`:
+
+- **Has value** → `setAgentURI` (update metadata, same agent ID)
+- **Empty/null** → `register` (mint new NFT, new agent ID)
+
+**Never clear the wallet state unless you intentionally want a new agent ID.** To update name/description/endpoints, just re-run.
+
+### Troubleshooting: "Not authorized" on `setAgentURI`
+
+The signing wallet doesn't own the on-chain token. Before doing anything, investigate:
+
+1. **Check the chain ID.** Agent IDs are chain-specific (e.g. `84532:243` is Base Sepolia, `8453:243` is Base mainnet). If you previously deployed on a different chain, the stored `erc8004AgentId` won't work on the target chain. Make sure `chainId` in `registerOnChain()` matches the chain where the agent was originally registered.
+
+2. **Check the wallet.** Verify that `WALLET_PRIVATE_KEY` derives to the same address that owns the token on-chain. If the wallet was regenerated (e.g. after deleting `.openserv.json` and re-provisioning), it won't match the original owner.
+
+3. **Last resort: fresh mint.** Only if the original wallet is unrecoverable and you accept getting a new agent ID:
+
+```typescript
+await client.erc8004.deploy({
+  workflowId,
+  erc8004AgentId: '',
+  stringifiedAgentCard: '',
+  network: 'base',
+  chainId: 8453,
+  rpcUrl: 'https://mainnet.base.org',
+})
+// registerOnChain will now mint a new agent — you lose the old ID
+```
+
+---
+
 ## Authentication
 
 ```typescript

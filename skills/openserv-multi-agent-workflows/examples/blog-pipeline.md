@@ -50,7 +50,7 @@ WALLET_PRIVATE_KEY=0x...
     "setup": "tsx src/setup.ts"
   },
   "dependencies": {
-    "@openserv-labs/client": "^2.0.2",
+    "@openserv-labs/client": "^2.1.1",
     "dotenv": "^16.4.5"
   },
   "devDependencies": {
@@ -111,7 +111,7 @@ async function setup() {
       triggers.webhook({
         name: 'webhook',
         waitForCompletion: true,
-        timeout: 300,
+        timeout: 600,
         input: {
           topic: { type: 'string', title: 'Blog Topic', description: 'Topic for the blog post' }
         }
@@ -200,7 +200,7 @@ async function setup() {
       triggers.webhook({
         name: 'webhook',
         waitForCompletion: true,
-        timeout: 300,
+        timeout: 600,
         input: {
           topic: { type: 'string', title: 'Blog Topic', description: 'Topic for the blog post' }
         }

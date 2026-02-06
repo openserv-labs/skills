@@ -66,7 +66,7 @@ my-agent/
   "scripts": { "dev": "tsx src/agent.ts" },
   "dependencies": {
     "@openserv-labs/sdk": "^2.1.0",
-    "@openserv-labs/client": "^2.0.2",
+    "@openserv-labs/client": "^2.1.1",
     "dotenv": "^16.4.5",
     "openai": "^5.0.1",
     "zod": "^3.23.8"
@@ -187,11 +187,13 @@ workflow: {
 ```typescript
 import { triggers } from '@openserv-labs/client'
 
-triggers.webhook({ waitForCompletion: true, timeout: 180 })
-triggers.x402({ name: '...', description: '...', price: '0.01' })
+triggers.webhook({ waitForCompletion: true, timeout: 600 })
+triggers.x402({ name: '...', description: '...', price: '0.01', timeout: 600 })
 triggers.cron({ schedule: '0 9 * * *' })
 triggers.manual()
 ```
+
+> **Important:** Always set `timeout` to at least **600 seconds** (10 minutes) for webhook and x402 triggers. Agents often take significant time to process requests — especially when performing research, content generation, or other complex tasks. A low timeout will cause premature failures. For multi-agent pipelines with many sequential steps, consider 900 seconds or more.
 
 ---
 
@@ -223,13 +225,59 @@ await provision({
   workflow: {
     name: 'Lightning Service Pro',
     goal: 'Describe in detail what this workflow does — be thorough, vague goals cause failures',
-    trigger: triggers.webhook({ waitForCompletion: true }),
+    trigger: triggers.webhook({ waitForCompletion: true, timeout: 600 }),
     task: { description: 'Process incoming requests' }
   }
 })
 
 await agent.start() // Start without tunnel
 ```
+
+---
+
+## ERC-8004: On-Chain Agent Identity
+
+After provisioning, register your agent on-chain for discoverability via the Identity Registry:
+
+```typescript
+import { Agent, run } from '@openserv-labs/sdk'
+import { provision, triggers, PlatformClient } from '@openserv-labs/client'
+
+// ... define agent and capabilities ...
+
+const result = await provision({
+  agent: { instance: agent, name: 'my-agent', description: '...' },
+  workflow: {
+    name: 'My Service',
+    goal: 'Detailed description of what the workflow does',
+    trigger: triggers.x402({ name: 'My Service', description: '...', price: '0.01', timeout: 600 }),
+    task: { description: 'Process requests' },
+  },
+})
+
+// Register on-chain
+const client = new PlatformClient()
+await client.authenticate(process.env.WALLET_PRIVATE_KEY)
+
+const erc8004 = await client.erc8004.registerOnChain({
+  workflowId: result.workflowId,
+  privateKey: process.env.WALLET_PRIVATE_KEY!,
+  name: 'My Service',
+  description: 'What this agent does',
+})
+
+console.log(`Agent ID: ${erc8004.agentId}`)  // "8453:42"
+console.log(`TX: ${erc8004.blockExplorerUrl}`)
+console.log(`Scan: ${erc8004.scanUrl}`)      // "https://www.8004scan.io/agents/base/42"
+
+await run(agent)
+```
+
+- **First run** mints a new identity NFT. **Re-runs update the URI** — agent ID stays the same.
+- **Never clear the wallet state** unless you intentionally want a new agent ID. To update metadata, just re-run.
+- Default chain: Base mainnet (8453). Pass `chainId` / `rpcUrl` for others.
+
+See **openserv-client** skill for the full ERC-8004 API reference and troubleshooting.
 
 ---
 

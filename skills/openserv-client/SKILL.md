@@ -52,7 +52,7 @@ The `workflow` config requires two important properties:
 workflow: {
   name: 'Deep Research Pro',
   goal: 'Research any topic in depth, synthesize findings from multiple sources, and produce a comprehensive report with citations',
-  trigger: triggers.webhook({ waitForCompletion: true }),
+  trigger: triggers.webhook({ waitForCompletion: true, timeout: 600 }),
   task: { description: 'Research the given topic' }
 }
 ```
@@ -136,7 +136,7 @@ import { triggers } from '@openserv-labs/client'
 triggers.webhook({
   input: { query: { type: 'string', description: 'Search query' } },
   waitForCompletion: true,
-  timeout: 180
+  timeout: 600
 })
 
 // x402 (paid API with paywall)
@@ -144,6 +144,7 @@ triggers.x402({
   name: 'AI Research Assistant',
   description: 'Get comprehensive research reports on any topic',
   price: '0.01',
+  timeout: 600,
   input: {
     prompt: {
       type: 'string',
@@ -162,6 +163,10 @@ triggers.cron({
 // Manual (platform UI only)
 triggers.manual()
 ```
+
+### Timeout
+
+> **Important:** Always set `timeout` to at least **600 seconds** (10 minutes) for webhook and x402 triggers. Agents often take significant time to process requests — especially in multi-agent workflows or when performing research, content generation, or other complex tasks. A low timeout (e.g., 180s) will cause premature failures. When in doubt, err on the side of a longer timeout. For multi-agent pipelines with many sequential steps, consider 900 seconds or more.
 
 ### Input Schema
 
@@ -247,6 +252,36 @@ const result = await client.payments.payWorkflow({
 | `OPENSERV_API_URL`      | Custom API URL               | No       |
 
 \*Either API key or wallet key required
+
+---
+
+## ERC-8004: On-Chain Agent Identity
+
+Register your agent on-chain after provisioning. This mints an NFT on the Identity Registry and publishes your agent's service endpoints to IPFS.
+
+```typescript
+import { PlatformClient } from '@openserv-labs/client'
+
+const client = new PlatformClient()
+await client.authenticate(process.env.WALLET_PRIVATE_KEY)
+
+const erc8004 = await client.erc8004.registerOnChain({
+  workflowId: result.workflowId,
+  privateKey: process.env.WALLET_PRIVATE_KEY!,
+  name: 'My Agent',
+  description: 'What this agent does',
+})
+
+console.log(`Agent ID: ${erc8004.agentId}`)         // "8453:42"
+console.log(`Explorer: ${erc8004.blockExplorerUrl}`)
+console.log(`Scan: ${erc8004.scanUrl}`)              // "https://www.8004scan.io/agents/base/42"
+```
+
+- **First run** mints a new NFT. **Re-runs update the URI** — agent ID stays the same.
+- Default chain is Base mainnet (8453). Pass `chainId` and `rpcUrl` for other chains.
+- **Never clear the wallet state** unless you intentionally want a new agent ID.
+
+See `reference.md` for the full ERC-8004 API (wallet management, chain helpers, troubleshooting).
 
 ---
 

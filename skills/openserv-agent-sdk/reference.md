@@ -199,12 +199,42 @@ const config = await client.web3.getUsdcTopupConfig()
 await client.web3.verifyUsdcTransaction({ txHash: '0x...', payerAddress: '0x...', signature: '0x...' })
 ```
 
+## ERC-8004: On-Chain Registration
+
+Register after `provision()`, before `run()`:
+
+```typescript
+import { PlatformClient } from '@openserv-labs/client'
+
+const client = new PlatformClient()
+await client.authenticate(process.env.WALLET_PRIVATE_KEY)
+
+const erc8004 = await client.erc8004.registerOnChain({
+  workflowId: result.workflowId,       // from provision()
+  privateKey: process.env.WALLET_PRIVATE_KEY!,
+  name: 'My Agent',
+  description: 'What this agent does',
+  // chainId: 8453,                     // Default: Base mainnet
+  // rpcUrl: 'https://mainnet.base.org' // Default
+})
+
+erc8004.agentId          // "8453:42"
+erc8004.txHash           // "0xabc..."
+erc8004.blockExplorerUrl // "https://basescan.org/tx/..."
+erc8004.agentCardUrl     // IPFS URL
+```
+
+- First run → `register()` (new mint). Re-runs → `setAgentURI()` (update, same ID).
+- **Never clear wallet state** unless you want a new agent ID.
+
+See **openserv-client** reference for full ERC-8004 API.
+
 ## Environment Variables
 
 ```env
 OPENAI_API_KEY=your-key
 OPENSERV_API_KEY=auto-populated
 OPENSERV_AUTH_TOKEN=auto-populated
-WALLET_PRIVATE_KEY=auto-populated (also used for x402 payments and USDC top-up)
+WALLET_PRIVATE_KEY=auto-populated (also used for x402 payments, USDC top-up, and ERC-8004 registration)
 PORT=7378
 ```
