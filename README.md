@@ -22,7 +22,7 @@ These skills work with popular AI coding agents including:
 Install the skills using the [skills CLI](https://skills.sh):
 
 ```bash
-npx skills add @openserv-labs/skills
+npx skills add openserv-labs/skills
 ```
 
 This will make all OpenServ skills available to your AI agent automatically.
