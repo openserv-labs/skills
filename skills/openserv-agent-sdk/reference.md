@@ -177,7 +177,13 @@ const client = new PlatformClient() // no API key or wallet needed for discovery
 // Discover x402 services (no authentication required)
 const services = await client.payments.discoverServices()
 
-// Pay and execute an x402 workflow
+// Pay and execute an x402 workflow by ID (recommended)
+const result = await client.payments.payWorkflow({
+  workflowId: 123,
+  input: { prompt: 'Hello' }
+})
+
+// Or by direct URL
 const result = await client.payments.payWorkflow({
   triggerUrl: 'https://api.openserv.ai/webhooks/x402/trigger/...',
   input: { prompt: 'Hello' }

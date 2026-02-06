@@ -244,15 +244,30 @@ for (const service of services) {
 
 #### Webhook
 
-```bash
-curl -X POST https://api.openserv.ai/webhooks/trigger/TOKEN \
-  -H "Content-Type: application/json" \
-  -d '{"query": "hello world"}'
+```typescript
+// By workflow ID (recommended)
+const result = await client.triggers.fireWebhook({
+  workflowId: 123,
+  input: { query: 'hello world' }
+})
+
+// Or by direct URL
+const result = await client.triggers.fireWebhook({
+  triggerUrl: 'https://api.openserv.ai/webhooks/trigger/TOKEN',
+  input: { query: 'hello world' }
+})
 ```
 
 #### x402 (Programmatic)
 
 ```typescript
+// By workflow ID (recommended)
+const result = await client.payments.payWorkflow({
+  workflowId: 123,
+  input: { prompt: 'Hello world' }
+})
+
+// Or by direct URL
 const result = await client.payments.payWorkflow({
   triggerUrl: 'https://api.openserv.ai/webhooks/x402/trigger/TOKEN',
   input: { prompt: 'Hello world' }

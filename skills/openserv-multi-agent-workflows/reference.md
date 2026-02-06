@@ -128,10 +128,25 @@ The client auto-resolves `type: 'webhook'` → integration connection ID. No nee
 
 ### Webhook
 
-```bash
-curl -X POST https://api.openserv.ai/webhooks/trigger/TOKEN \
-  -H "Content-Type: application/json" \
-  -d '{"topic": "AI trends"}'
+```typescript
+// By workflow ID (recommended)
+const result = await client.triggers.fireWebhook({
+  workflowId: 123,
+  input: { topic: 'AI trends' }
+})
+
+// By trigger name (for multi-trigger workflows)
+const result = await client.triggers.fireWebhook({
+  workflowId: 123,
+  triggerName: 'My Webhook',
+  input: { topic: 'AI trends' }
+})
+
+// Or by direct URL
+const result = await client.triggers.fireWebhook({
+  triggerUrl: 'https://api.openserv.ai/webhooks/trigger/TOKEN',
+  input: { topic: 'AI trends' }
+})
 ```
 
 ### x402 (Paid)
@@ -161,7 +176,20 @@ Paywall URL: `https://platform.openserv.ai/workspace/paywall/${trigger.token}`
 ### Calling x402 Programmatically
 
 ```typescript
-// discoverServices() does not require authentication
+// By workflow ID (recommended)
+const result = await client.payments.payWorkflow({
+  workflowId: 123,
+  input: { topic: 'AI trends' }
+})
+
+// By trigger name (for multi-trigger workflows)
+const result = await client.payments.payWorkflow({
+  workflowId: 123,
+  triggerName: 'Premium Pipeline',
+  input: { topic: 'AI trends' }
+})
+
+// Or by direct URL (e.g. from discoverServices)
 const services = await client.payments.discoverServices()
 const result = await client.payments.payWorkflow({
   triggerUrl: services[0].webhookUrl,

@@ -244,11 +244,37 @@ await client.triggers.update({
 // Activate trigger
 await client.triggers.activate({ workflowId: 789, id: 'trigger-id' })
 
-// Fire trigger manually
+// Fire trigger manually (internal API, requires workflowId + triggerId)
 await client.triggers.fire({
   workflowId: 789,
   id: 'trigger-id',
   input: JSON.stringify({ query: 'test' })
+})
+
+// Fire webhook trigger (simplified — resolves token automatically)
+await client.triggers.fireWebhook({
+  workflowId: 789,                         // Resolves the webhook trigger automatically
+  input: { query: 'hello world' }
+})
+
+// Fire webhook by trigger name (for multi-trigger workflows)
+await client.triggers.fireWebhook({
+  workflowId: 789,
+  triggerName: 'My Webhook',               // Target a specific trigger by name
+  input: { query: 'hello world' }
+})
+
+// Fire webhook by trigger ID
+await client.triggers.fireWebhook({
+  workflowId: 789,
+  triggerId: 'trigger-id',
+  input: { query: 'hello world' }
+})
+
+// Fire webhook by direct URL (when you already have the URL)
+await client.triggers.fireWebhook({
+  triggerUrl: 'https://api.openserv.ai/webhooks/trigger/TOKEN',
+  input: { query: 'hello world' }
 })
 
 // Delete trigger
@@ -257,6 +283,8 @@ await client.triggers.delete({ workflowId: 789, id: 'trigger-id' })
 
 ### Webhook/x402 URLs
 
+URL construction is handled automatically by `fireWebhook()` and `payWorkflow()`. If you need the raw URLs:
+
 ```typescript
 const trigger = await client.triggers.get({ workflowId, id: triggerId })
 
@@ -264,7 +292,7 @@ const trigger = await client.triggers.get({ workflowId, id: triggerId })
 const webhookUrl = `https://api.openserv.ai/webhooks/trigger/${trigger.token}`
 
 // x402 URL
-const x402Url = `https://api.openserv.ai/x402/trigger/${trigger.token}`
+const x402Url = `https://api.openserv.ai/webhooks/x402/trigger/${trigger.token}`
 
 // Paywall page (x402 only)
 const paywallUrl = `https://platform.openserv.ai/workspace/paywall/${trigger.token}`
@@ -365,7 +393,20 @@ Integration identifiers: `webhook-trigger`, `x402-trigger`, `cron-trigger`, `man
 // Discover x402 services (no authentication required)
 const services = await client.payments.discoverServices()
 
-// Pay and execute an x402 workflow
+// Pay and execute an x402 workflow by ID (recommended)
+const result = await client.payments.payWorkflow({
+  workflowId: 789,
+  input: { prompt: 'Generate a summary' }
+})
+
+// Pay by trigger name (for multi-trigger workflows)
+const result = await client.payments.payWorkflow({
+  workflowId: 789,
+  triggerName: 'Premium Service',
+  input: { prompt: 'Generate a summary' }
+})
+
+// Pay by direct URL (when you already have the URL)
 const result = await client.payments.payWorkflow({
   triggerUrl: 'https://api.openserv.ai/webhooks/x402/trigger/...',
   input: { prompt: 'Generate a summary' }
