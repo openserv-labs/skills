@@ -13,7 +13,14 @@ Build and deploy custom AI agents for the OpenServ platform using TypeScript.
 - `troubleshooting.md` - Common issues and solutions
 - `examples/` - Complete code examples
 
-## What's New in v2.1
+## What's New in v2.3
+
+- **`DISABLE_TUNNEL` Env Var** - Set `DISABLE_TUNNEL=true` for production deployments (e.g. Cloud Run). `run()` starts only the HTTP server, no WebSocket tunnel.
+- **`FORCE_TUNNEL` Env Var** - Set `FORCE_TUNNEL=true` to force tunnel mode even when an `endpointUrl` is configured.
+- **Public Health Check** - The `/health` route now responds before auth middleware, so the platform health cron can reach it without credentials.
+- **Binary Tunnel Responses** - Tunnel responses are sent as binary frames, preserving gzip, images, and other binary payloads transparently.
+
+### Earlier in v2.x
 
 - **Built-in Tunnel** - The `run()` function auto-connects to `agents-proxy.openserv.ai`
 - **No Endpoint URL Needed** - Skip `endpointUrl` in `provision()` during development
@@ -76,6 +83,10 @@ WALLET_PRIVATE_KEY=
 OPENSERV_API_KEY=
 OPENSERV_AUTH_TOKEN=
 PORT=7378
+# Production: skip tunnel and run HTTP server only
+# DISABLE_TUNNEL=true
+# Force tunnel even when endpointUrl is set
+# FORCE_TUNNEL=true
 ```
 
 ---
@@ -210,6 +221,8 @@ The `run()` function automatically:
 
 ### Production
 
+When deploying to a hosting provider like Cloud Run, set `DISABLE_TUNNEL=true` as an environment variable. This makes `run()` start only the HTTP server without opening a WebSocket tunnel — the platform reaches your agent directly at its public URL.
+
 ```typescript
 await provision({
   agent: {
@@ -225,7 +238,8 @@ await provision({
   }
 })
 
-await agent.start() // Start without tunnel
+// With DISABLE_TUNNEL=true, run() starts only the HTTP server (no tunnel)
+await run(agent)
 ```
 
 ---

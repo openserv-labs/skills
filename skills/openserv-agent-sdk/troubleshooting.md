@@ -69,7 +69,9 @@ The `run()` function connects via WebSocket to `agents-proxy.openserv.ai`. If co
 2. Verify no firewall blocking WebSocket connections
 3. The agent retries with exponential backoff (up to 10 retries)
 
-For production, use `agent.start()` with `endpointUrl` instead of the tunnel.
+For production, set `DISABLE_TUNNEL=true` and use `run(agent)` — it will start only the HTTP server without the WebSocket tunnel. The platform reaches your agent directly at its public `endpointUrl`.
+
+To force tunnel mode even when `endpointUrl` is configured, set `FORCE_TUNNEL=true`.
 
 ---
 

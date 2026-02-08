@@ -9,6 +9,10 @@ Quick reference for common patterns.
 - **Automatic Port Fallback** - If port 7378 is busy, finds an available one
 - **Direct Credential Binding** - Pass `agent.instance` to `provision()` for automatic credential binding
 - **`setCredentials()` Method** - Manually bind API key and auth token to agent
+- **`DISABLE_TUNNEL`** - Set `DISABLE_TUNNEL=true` in production to run HTTP server only (no WebSocket tunnel)
+- **`FORCE_TUNNEL`** - Set `FORCE_TUNNEL=true` to force tunnel mode even with an `endpointUrl`
+- **Public Health Check** - `/health` endpoint responds before auth middleware
+- **Binary Tunnel Responses** - Tunnel sends binary frames, preserving gzip/images transparently
 
 ## Installation
 
@@ -257,4 +261,7 @@ OPENSERV_API_KEY=auto-populated
 OPENSERV_AUTH_TOKEN=auto-populated
 WALLET_PRIVATE_KEY=auto-populated (also used for x402 payments, USDC top-up, and ERC-8004 registration)
 PORT=7378
+DISABLE_TUNNEL=true        # Production: skip tunnel, run HTTP server only
+FORCE_TUNNEL=true          # Force tunnel even when endpointUrl is configured
+OPENSERV_PROXY_URL=...     # Custom proxy URL (default: https://agents-proxy.openserv.ai)
 ```
