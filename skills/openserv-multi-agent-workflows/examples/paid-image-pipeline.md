@@ -52,7 +52,8 @@ import { z } from 'zod'
 const IMAGE_AGENT_ID = 1044 // Nano Banana Pro Agent (from marketplace)
 
 const agent = new Agent({
-  systemPrompt: 'You are a concise agent. When a user sends you any message, respond with "Roger that".'
+  systemPrompt:
+    'You are a concise agent. When a user sends you any message, respond with "Roger that".'
 })
 
 agent.addCapability({
@@ -132,26 +133,33 @@ main().catch(console.error)
 
 ## Adding ERC-8004 On-Chain Registration
 
-Add on-chain identity after provisioning so the agent is discoverable via the Identity Registry:
+Add on-chain identity after provisioning so the agent is discoverable via the Identity Registry. **Requires ETH on Base** for gas. Always wrap in try/catch so failures don't prevent `run(agent)` from starting. Reload `.env` after `provision()` to pick up the freshly written `WALLET_PRIVATE_KEY`.
 
 ```typescript
 import { PlatformClient } from '@openserv-labs/client'
 
 // ... after provision(), before run():
 
-const client = new PlatformClient()
-await client.authenticate(process.env.WALLET_PRIVATE_KEY)
+// Reload .env to pick up WALLET_PRIVATE_KEY written by provision()
+dotenv.config({ override: true })
 
-const erc8004 = await client.erc8004.registerOnChain({
-  workflowId: result.workflowId,
-  privateKey: process.env.WALLET_PRIVATE_KEY!,
-  name: 'Roger That Image',
-  description: 'Send any message and get a "Roger that" image'
-})
+try {
+  const client = new PlatformClient()
+  await client.authenticate(process.env.WALLET_PRIVATE_KEY)
 
-console.log(`ERC-8004 Agent ID: ${erc8004.agentId}`)
-console.log(`Block Explorer: ${erc8004.blockExplorerUrl}`)
-console.log(`Scan: ${erc8004.scanUrl}`)
+  const erc8004 = await client.erc8004.registerOnChain({
+    workflowId: result.workflowId,
+    privateKey: process.env.WALLET_PRIVATE_KEY!,
+    name: 'Roger That Image',
+    description: 'Send any message and get a "Roger that" image',
+  })
+
+  console.log(`ERC-8004 Agent ID: ${erc8004.agentId}`)
+  console.log(`Block Explorer: ${erc8004.blockExplorerUrl}`)
+  console.log(`Scan: ${erc8004.scanUrl}`)
+} catch (error) {
+  console.warn('ERC-8004 registration skipped:', error instanceof Error ? error.message : error)
+}
 
 await run(agent)
 ```

@@ -292,22 +292,33 @@ const result = await client.payments.payWorkflow({
 
 Register your agent on-chain after provisioning. This mints an NFT on the Identity Registry and publishes your agent's service endpoints to IPFS.
 
+> **Requires ETH on Base.** The wallet created by `provision()` starts with zero balance. Fund it with a small amount of ETH on Base mainnet before registration. Always wrap in try/catch so failures don't prevent `run(agent)` from starting.
+
+> **Reload `.env` after `provision()`.** `provision()` writes `WALLET_PRIVATE_KEY` to `.env` at runtime, but `process.env` already loaded the empty value at startup. Use `dotenv.config({ override: true })` after `provision()` to pick up the freshly written key. See **openserv-agent-sdk** skill for the full dotenv pattern.
+
 ```typescript
 import { PlatformClient } from '@openserv-labs/client'
 
-const client = new PlatformClient()
-await client.authenticate(process.env.WALLET_PRIVATE_KEY)
+// Reload .env to pick up WALLET_PRIVATE_KEY written by provision()
+dotenv.config({ override: true })
 
-const erc8004 = await client.erc8004.registerOnChain({
-  workflowId: result.workflowId,
-  privateKey: process.env.WALLET_PRIVATE_KEY!,
-  name: 'My Agent',
-  description: 'What this agent does'
-})
+try {
+  const client = new PlatformClient()
+  await client.authenticate(process.env.WALLET_PRIVATE_KEY)
 
-console.log(`Agent ID: ${erc8004.agentId}`) // "8453:42"
-console.log(`Explorer: ${erc8004.blockExplorerUrl}`)
-console.log(`Scan: ${erc8004.scanUrl}`) // "https://www.8004scan.io/agents/base/42"
+  const erc8004 = await client.erc8004.registerOnChain({
+    workflowId: result.workflowId,
+    privateKey: process.env.WALLET_PRIVATE_KEY!,
+    name: 'My Agent',
+    description: 'What this agent does',
+  })
+
+  console.log(`Agent ID: ${erc8004.agentId}`)         // "8453:42"
+  console.log(`Explorer: ${erc8004.blockExplorerUrl}`)
+  console.log(`Scan: ${erc8004.scanUrl}`)              // "https://www.8004scan.io/agents/base/42"
+} catch (error) {
+  console.warn('ERC-8004 registration skipped:', error instanceof Error ? error.message : error)
+}
 ```
 
 - **First run** mints a new NFT. **Re-runs update the URI** — agent ID stays the same.

@@ -443,24 +443,33 @@ On-chain agent identity registration via the Identity Registry contract.
 
 ### Register On-Chain (High-Level)
 
+> **Requires ETH on Base.** The wallet starts unfunded. Always wrap in try/catch so failures don't crash the agent. Reload `.env` after `provision()` with `dotenv.config({ override: true })` to pick up the freshly written `WALLET_PRIVATE_KEY`.
+
 ```typescript
-const client = new PlatformClient()
-await client.authenticate(process.env.WALLET_PRIVATE_KEY)
+// Reload .env after provision() to pick up WALLET_PRIVATE_KEY
+dotenv.config({ override: true })
 
-const result = await client.erc8004.registerOnChain({
-  workflowId: 123,
-  privateKey: process.env.WALLET_PRIVATE_KEY!,
-  chainId: 8453,                          // Default: Base mainnet
-  rpcUrl: 'https://mainnet.base.org',     // Default
-  name: 'My Agent',
-  description: 'What this agent does',
-})
+try {
+  const client = new PlatformClient()
+  await client.authenticate(process.env.WALLET_PRIVATE_KEY)
 
-result.agentId          // "8453:42" (chainId:tokenId)
-result.ipfsCid          // "bafkrei..."
-result.txHash           // "0xabc..."
-result.agentCardUrl     // "https://gateway.pinata.cloud/ipfs/..."
-result.blockExplorerUrl // "https://basescan.org/tx/..."
+  const result = await client.erc8004.registerOnChain({
+    workflowId: 123,
+    privateKey: process.env.WALLET_PRIVATE_KEY!,
+    chainId: 8453,                          // Default: Base mainnet
+    rpcUrl: 'https://mainnet.base.org',     // Default
+    name: 'My Agent',
+    description: 'What this agent does',
+  })
+
+  result.agentId          // "8453:42" (chainId:tokenId)
+  result.ipfsCid          // "bafkrei..."
+  result.txHash           // "0xabc..."
+  result.agentCardUrl     // "https://gateway.pinata.cloud/ipfs/..."
+  result.blockExplorerUrl // "https://basescan.org/tx/..."
+} catch (error) {
+  console.warn('ERC-8004 registration skipped:', error instanceof Error ? error.message : error)
+}
 ```
 
 **First run:** mints NFT via `register()` → uploads agent card to IPFS → sets token URI.

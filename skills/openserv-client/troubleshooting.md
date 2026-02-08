@@ -93,3 +93,23 @@ triggers.x402({
 
 - Verify `WALLET_PRIVATE_KEY` or `OPENSERV_USER_API_KEY` is set
 - For wallet auth, ensure key starts with `0x`
+- If `WALLET_PRIVATE_KEY` is empty after `provision()`, reload `.env` with `dotenv.config({ override: true })` — see below
+
+---
+
+## ERC-8004: "insufficient funds for transfer"
+
+The wallet has no ETH on Base mainnet for gas. Fund the wallet address (logged during provisioning) with a small amount of ETH on Base. Always wrap `registerOnChain` in try/catch so the agent can still start.
+
+---
+
+## ERC-8004: 401 on first run
+
+`WALLET_PRIVATE_KEY` is empty because `provision()` writes it to `.env` after the initial `dotenv` load. Use `dotenv` programmatically and reload after provision:
+
+```typescript
+import dotenv from 'dotenv'
+dotenv.config()
+// ... provision() ...
+dotenv.config({ override: true })
+```

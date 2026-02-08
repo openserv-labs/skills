@@ -78,3 +78,34 @@ For production, use `agent.start()` with `endpointUrl` instead of the tunnel.
 - Verify `OPENAI_API_KEY` is set correctly
 - Check API key has credits/billing enabled
 - SDK requires `openai@^5.x` as a peer dependency
+
+---
+
+## ERC-8004 registration fails with "insufficient funds"
+
+**Error:** `ContractFunctionExecutionError: insufficient funds for transfer`
+
+**Cause:** The wallet created by `provision()` has no ETH on Base mainnet to pay gas.
+
+**Solution:** Fund the wallet address logged during provisioning (`Created new wallet: 0x...`) with a small amount of ETH on Base. Always wrap `registerOnChain` in a try/catch so the agent can still start via `run(agent)`.
+
+---
+
+## ERC-8004 registration fails with 401 Unauthorized
+
+**Error:** `AxiosError: Request failed with status code 401` during `client.authenticate()`
+
+**Cause:** `WALLET_PRIVATE_KEY` is empty. `provision()` writes it to `.env` at runtime, but `process.env` already loaded the empty value at startup.
+
+**Solution:** Use `dotenv` programmatically and reload after `provision()`:
+
+```typescript
+import dotenv from 'dotenv'
+dotenv.config()
+
+// ... provision() ...
+
+dotenv.config({ override: true })  // reload to pick up WALLET_PRIVATE_KEY
+```
+
+Do **not** use `import 'dotenv/config'` — it only loads `.env` once at import time and cannot be reloaded.

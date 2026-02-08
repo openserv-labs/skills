@@ -137,18 +137,25 @@ await agent.callIntegration({
 
 ## Action Context
 
-The `action` parameter in capabilities contains request context:
+The `action` parameter in capabilities is a **union type** — `task` only exists on the `'do-task'` variant. Always narrow with a type guard before accessing `action.task`:
 
 ```typescript
-action.type // 'do-task'
-action.task.id
-action.task.description
-action.task.input
-action.workspace.id
-action.workspace.goal
-action.me.id // Current agent ID
-action.integrations // Available integrations
+async run({ args, action }) {
+  // action.task does NOT exist on all action types — you must narrow first
+  if (action?.type === 'do-task' && action.task) {
+    const { workspace, task } = action
+    workspace.id        // Workspace ID
+    workspace.goal      // Workspace goal
+    task.id             // Task ID
+    task.description    // Task description
+    task.input          // Task input
+    action.me.id        // Current agent ID
+    action.integrations // Available integrations
+  }
+}
 ```
+
+**Do not** extract `action?.task?.id` before the type guard — TypeScript will error with `Property 'task' does not exist on type 'ActionSchema'`.
 
 ---
 
@@ -225,9 +232,21 @@ await agent.start() // Start without tunnel
 
 ## ERC-8004: On-Chain Agent Identity
 
-After provisioning, register your agent on-chain for discoverability via the Identity Registry:
+After provisioning, register your agent on-chain for discoverability via the Identity Registry.
+
+> **Requires ETH on Base.** Registration calls `register()` on the ERC-8004 contract on **Base mainnet (chain 8453)**, which costs gas. The wallet created by `provision()` starts with a zero balance. Fund it with a small amount of ETH on Base before the first registration attempt. The wallet address is logged during provisioning (`Created new wallet: 0x...`).
+
+> **Always wrap in try/catch** so a registration failure (e.g. unfunded wallet) doesn't prevent `run(agent)` from starting.
+
+Two important patterns:
+
+1. **Use `dotenv` programmatically** (not `import 'dotenv/config'`) so you can reload `.env` after `provision()` writes `WALLET_PRIVATE_KEY`.
+2. **Call `dotenv.config({ override: true })` after `provision()`** to pick up the freshly written key before ERC-8004 registration.
 
 ```typescript
+import dotenv from 'dotenv'
+dotenv.config()
+
 import { Agent, run } from '@openserv-labs/sdk'
 import { provision, triggers, PlatformClient } from '@openserv-labs/client'
 
@@ -239,24 +258,31 @@ const result = await provision({
     name: 'My Service',
     goal: 'Detailed description of what the workflow does',
     trigger: triggers.x402({ name: 'My Service', description: '...', price: '0.01', timeout: 600 }),
-    task: { description: 'Process requests' }
-  }
+    task: { description: 'Process requests' },
+  },
 })
 
-// Register on-chain
-const client = new PlatformClient()
-await client.authenticate(process.env.WALLET_PRIVATE_KEY)
+// Reload .env to pick up WALLET_PRIVATE_KEY written by provision()
+dotenv.config({ override: true })
 
-const erc8004 = await client.erc8004.registerOnChain({
-  workflowId: result.workflowId,
-  privateKey: process.env.WALLET_PRIVATE_KEY!,
-  name: 'My Service',
-  description: 'What this agent does'
-})
+// Register on-chain (non-blocking — requires funded wallet on Base)
+try {
+  const client = new PlatformClient()
+  await client.authenticate(process.env.WALLET_PRIVATE_KEY)
 
-console.log(`Agent ID: ${erc8004.agentId}`) // "8453:42"
-console.log(`TX: ${erc8004.blockExplorerUrl}`)
-console.log(`Scan: ${erc8004.scanUrl}`) // "https://www.8004scan.io/agents/base/42"
+  const erc8004 = await client.erc8004.registerOnChain({
+    workflowId: result.workflowId,
+    privateKey: process.env.WALLET_PRIVATE_KEY!,
+    name: 'My Service',
+    description: 'What this agent does',
+  })
+
+  console.log(`Agent ID: ${erc8004.agentId}`)  // "8453:42"
+  console.log(`TX: ${erc8004.blockExplorerUrl}`)
+  console.log(`Scan: ${erc8004.scanUrl}`)      // "https://www.8004scan.io/agents/base/42"
+} catch (error) {
+  console.warn('ERC-8004 registration skipped:', error instanceof Error ? error.message : error)
+}
 
 await run(agent)
 ```

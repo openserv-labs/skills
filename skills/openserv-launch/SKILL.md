@@ -64,25 +64,25 @@ console.log(response.data)
 
 ## Endpoints Overview
 
-| Endpoint               | Method | Description                     |
-| ---------------------- | ------ | ------------------------------- |
-| `/api/launch`          | POST   | Create a new token with LP pool |
-| `/api/tokens`          | GET    | List launched tokens            |
-| `/api/tokens/:address` | GET    | Get token details by address    |
+| Endpoint              | Method | Description                      |
+| --------------------- | ------ | -------------------------------- |
+| `/api/launch`         | POST   | Create a new token with LP pool  |
+| `/api/tokens`         | GET    | List launched tokens             |
+| `/api/tokens/:address`| GET    | Get token details by address     |
 
 ---
 
 ## Launch Request Fields
 
-| Field         | Type   | Required | Description                                          |
-| ------------- | ------ | -------- | ---------------------------------------------------- |
-| `name`        | string | Yes      | Token name (1-64 characters)                         |
-| `symbol`      | string | Yes      | Token symbol (1-10 chars, uppercase, alphanumeric)   |
-| `wallet`      | string | Yes      | Creator wallet address (receives 50% of fees)        |
-| `description` | string | No       | Token description (max 500 characters)               |
-| `imageUrl`    | string | No       | Direct link to image file (jpg, png, gif, webp, svg) |
-| `website`     | string | No       | Website URL (must start with http/https)             |
-| `twitter`     | string | No       | Twitter handle (with or without @)                   |
+| Field       | Type   | Required | Description                                      |
+| ----------- | ------ | -------- | ------------------------------------------------ |
+| `name`      | string | Yes      | Token name (1-64 characters)                     |
+| `symbol`    | string | Yes      | Token symbol (1-10 chars, uppercase, alphanumeric) |
+| `wallet`    | string | Yes      | Creator wallet address (receives 50% of fees)   |
+| `description` | string | No     | Token description (max 500 characters)          |
+| `imageUrl`  | string | No       | Direct link to image file (jpg, png, gif, webp, svg) |
+| `website`   | string | No       | Website URL (must start with http/https)        |
+| `twitter`   | string | No       | Twitter handle (with or without @)              |
 
 ---
 
@@ -91,36 +91,36 @@ console.log(response.data)
 ```typescript
 interface LaunchResponse {
   success: true
-  internalId: string // Database record ID
-  creator: string // Creator wallet address
+  internalId: string           // Database record ID
+  creator: string              // Creator wallet address
   token: {
-    address: string // Deployed token contract
+    address: string            // Deployed token contract
     name: string
     symbol: string
-    supply: string // Always "1000000000"
+    supply: string             // Always "1000000000"
   }
   pool: {
-    address: string // Aerodrome CL pool
-    tickSpacing: number // 500
-    fee: string // "2%"
+    address: string            // Aerodrome CL pool
+    tickSpacing: number        // 500
+    fee: string                // "2%"
   }
   locker: {
-    address: string // LP locker contract
-    lpTokenId: string // NFT position ID
-    lockedUntil: string // ISO date (1 year from launch)
+    address: string            // LP locker contract
+    lpTokenId: string          // NFT position ID
+    lockedUntil: string        // ISO date (1 year from launch)
   }
   txHashes: {
-    tokenDeploy: string // Token deployment tx
-    stakingTransfer: string // 5% staking allocation tx
-    lpMint: string // LP position mint tx
-    lock: string // LP lock tx
-    buy: string // Initial buy tx
+    tokenDeploy: string        // Token deployment tx
+    stakingTransfer: string    // 5% staking allocation tx
+    lpMint: string             // LP position mint tx
+    lock: string               // LP lock tx
+    buy: string                // Initial buy tx
   }
   links: {
-    explorer: string // Basescan token page
-    aerodrome: string // Aerodrome swap page
-    dexscreener: string // DEXScreener chart
-    defillama: string // DefiLlama swap
+    explorer: string           // Basescan token page
+    aerodrome: string          // Aerodrome swap page
+    dexscreener: string        // DEXScreener chart
+    defillama: string          // DefiLlama swap
   }
 }
 ```
@@ -129,17 +129,17 @@ interface LaunchResponse {
 
 ## Token Defaults
 
-| Setting            | Value                    |
-| ------------------ | ------------------------ |
-| Token Supply       | 1 billion                |
-| Initial Market Cap | $15,000                  |
-| Price Range        | 2,000,000x (~$30B)       |
-| Pool Fee           | 2%                       |
-| Tick Spacing       | 500                      |
+| Setting            | Value              |
+| ------------------ | ------------------ |
+| Token Supply       | 1 billion          |
+| Initial Market Cap | $15,000            |
+| Price Range        | 2,000,000x (~$30B) |
+| Pool Fee           | 2%                 |
+| Tick Spacing       | 500                |
 | Fee Split          | 50/50 (creator/platform) |
-| Lock Duration      | 1 year                   |
-| Staking Allocation | 5%                       |
-| Initial Buy        | 0.0005 ETH               |
+| Lock Duration      | 1 year             |
+| Staking Allocation | 5%                 |
+| Initial Buy        | 0.0005 ETH         |
 
 ---
 

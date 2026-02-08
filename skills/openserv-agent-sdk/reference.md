@@ -207,32 +207,45 @@ await client.web3.verifyUsdcTransaction({ txHash: '0x...', payerAddress: '0x...'
 
 ## ERC-8004: On-Chain Registration
 
-Register after `provision()`, before `run()`:
+Register after `provision()`, before `run()`. **Always wrap in try/catch** — registration requires ETH on Base for gas, and the wallet starts unfunded. Without try/catch, a failure here will crash the process and prevent `run(agent)` from starting.
+
+**Important:** `provision()` writes `WALLET_PRIVATE_KEY` to `.env` at runtime. If you use `import 'dotenv/config'`, the env var is loaded once at startup (empty on first run) and never refreshed. Use `dotenv.config({ override: true })` after `provision()` to reload it:
 
 ```typescript
-import { PlatformClient } from '@openserv-labs/client'
+import dotenv from 'dotenv'
+dotenv.config()
 
-const client = new PlatformClient()
-await client.authenticate(process.env.WALLET_PRIVATE_KEY)
+// ... after provision() ...
 
-const erc8004 = await client.erc8004.registerOnChain({
-  workflowId: result.workflowId, // from provision()
-  privateKey: process.env.WALLET_PRIVATE_KEY!,
-  name: 'My Agent',
-  description: 'What this agent does'
-  // chainId: 8453,                     // Default: Base mainnet
-  // rpcUrl: 'https://mainnet.base.org' // Default
-})
+// Reload .env to pick up WALLET_PRIVATE_KEY written by provision()
+dotenv.config({ override: true })
 
-erc8004.agentId // "8453:42"
-erc8004.txHash // "0xabc..."
-erc8004.blockExplorerUrl // "https://basescan.org/tx/..."
-erc8004.agentCardUrl // IPFS URL
-erc8004.scanUrl // "https://www.8004scan.io/agents/base/42"
+try {
+  const client = new PlatformClient()
+  await client.authenticate(process.env.WALLET_PRIVATE_KEY)
+
+  const erc8004 = await client.erc8004.registerOnChain({
+    workflowId: result.workflowId,       // from provision()
+    privateKey: process.env.WALLET_PRIVATE_KEY!,
+    name: 'My Agent',
+    description: 'What this agent does',
+    // chainId: 8453,                     // Default: Base mainnet
+    // rpcUrl: 'https://mainnet.base.org' // Default
+  })
+
+  erc8004.agentId          // "8453:42"
+  erc8004.txHash           // "0xabc..."
+  erc8004.blockExplorerUrl // "https://basescan.org/tx/..."
+  erc8004.agentCardUrl     // IPFS URL
+  erc8004.scanUrl          // "https://www.8004scan.io/agents/base/42"
+} catch (error) {
+  console.warn('ERC-8004 registration skipped:', error instanceof Error ? error.message : error)
+}
 ```
 
 - First run → `register()` (new mint). Re-runs → `setAgentURI()` (update, same ID).
 - **Never clear wallet state** unless you want a new agent ID.
+- **Requires ETH on Base.** Fund the wallet logged during provisioning (`Created new wallet: 0x...`) with a small amount of ETH on Base mainnet before the first registration.
 
 See **openserv-client** reference for full ERC-8004 API.
 
