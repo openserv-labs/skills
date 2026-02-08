@@ -1,8 +1,8 @@
-# OpenServ SDK Reference (v2.1)
+# OpenServ SDK Reference
 
 Quick reference for common patterns.
 
-## What's New in v2.1
+## Features
 
 - **Built-in Tunnel** - `run()` auto-connects to `agents-proxy.openserv.ai` for local dev
 - **No Endpoint URL Needed** - Skip `endpointUrl` in `provision()` during development
@@ -216,19 +216,19 @@ const client = new PlatformClient()
 await client.authenticate(process.env.WALLET_PRIVATE_KEY)
 
 const erc8004 = await client.erc8004.registerOnChain({
-  workflowId: result.workflowId,       // from provision()
+  workflowId: result.workflowId, // from provision()
   privateKey: process.env.WALLET_PRIVATE_KEY!,
   name: 'My Agent',
-  description: 'What this agent does',
+  description: 'What this agent does'
   // chainId: 8453,                     // Default: Base mainnet
   // rpcUrl: 'https://mainnet.base.org' // Default
 })
 
-erc8004.agentId          // "8453:42"
-erc8004.txHash           // "0xabc..."
+erc8004.agentId // "8453:42"
+erc8004.txHash // "0xabc..."
 erc8004.blockExplorerUrl // "https://basescan.org/tx/..."
-erc8004.agentCardUrl     // IPFS URL
-erc8004.scanUrl          // "https://www.8004scan.io/agents/base/42"
+erc8004.agentCardUrl // IPFS URL
+erc8004.scanUrl // "https://www.8004scan.io/agents/base/42"
 ```
 
 - First run → `register()` (new mint). Re-runs → `setAgentURI()` (update, same ID).

@@ -42,26 +42,15 @@ social-media-pipeline/
 WALLET_PRIVATE_KEY=0x...
 ```
 
-### package.json
+### Dependencies
 
-```json
-{
-  "name": "social-media-pipeline",
-  "type": "module",
-  "scripts": {
-    "setup": "tsx src/setup.ts"
-  },
-  "dependencies": {
-    "@openserv-labs/client": "^2.1.3",
-    "dotenv": "^16.4.5"
-  },
-  "devDependencies": {
-    "@types/node": "^20.14.9",
-    "tsx": "^4.16.0",
-    "typescript": "^5.5.2"
-  }
-}
+```bash
+npm init -y && npm pkg set type=module
+npm i @openserv-labs/client dotenv
+npm i -D @types/node tsx typescript
 ```
+
+> **Note:** The project must use `"type": "module"` in `package.json`. Add a `"setup": "tsx src/setup.ts"` script for local development.
 
 ### src/setup.ts
 
@@ -196,9 +185,6 @@ flowchart TD
 ## Usage
 
 ```bash
-# Install dependencies
-npm install
-
 # Run setup (creates workflow, tasks, trigger)
 npm run setup
 

@@ -31,27 +31,15 @@ OPENAI_API_KEY=your-openai-key
 WALLET_PRIVATE_KEY=
 ```
 
-### package.json
+### Dependencies
 
-```json
-{
-  "name": "paid-image-pipeline",
-  "type": "module",
-  "scripts": { "dev": "tsx src/agent.ts" },
-  "dependencies": {
-    "@openserv-labs/sdk": "^2.1.0",
-    "@openserv-labs/client": "^2.1.3",
-    "dotenv": "^16.4.5",
-    "openai": "^5.0.1",
-    "zod": "^3.23.8"
-  },
-  "devDependencies": {
-    "@types/node": "^20.14.9",
-    "tsx": "^4.16.0",
-    "typescript": "^5.5.2"
-  }
-}
+```bash
+npm init -y && npm pkg set type=module
+npm i @openserv-labs/sdk @openserv-labs/client dotenv openai zod
+npm i -D @types/node tsx typescript
 ```
+
+> **Note:** The project must use `"type": "module"` in `package.json`. Add a `"dev": "tsx src/agent.ts"` script for local development.
 
 ### src/agent.ts
 
@@ -64,8 +52,7 @@ import { z } from 'zod'
 const IMAGE_AGENT_ID = 1044 // Nano Banana Pro Agent (from marketplace)
 
 const agent = new Agent({
-  systemPrompt:
-    'You are a concise agent. When a user sends you any message, respond with "Roger that".'
+  systemPrompt: 'You are a concise agent. When a user sends you any message, respond with "Roger that".'
 })
 
 agent.addCapability({
@@ -159,7 +146,7 @@ const erc8004 = await client.erc8004.registerOnChain({
   workflowId: result.workflowId,
   privateKey: process.env.WALLET_PRIVATE_KEY!,
   name: 'Roger That Image',
-  description: 'Send any message and get a "Roger that" image',
+  description: 'Send any message and get a "Roger that" image'
 })
 
 console.log(`ERC-8004 Agent ID: ${erc8004.agentId}`)
