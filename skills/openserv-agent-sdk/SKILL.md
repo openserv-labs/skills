@@ -131,19 +131,6 @@ await agent.uploadFile({ workspaceId, path: 'output.txt', file: 'content', taskI
 await agent.deleteFile({ workspaceId, fileId })
 ```
 
-### Secrets & Integrations
-
-```typescript
-const secrets = await agent.getSecrets({ workspaceId })
-const value = await agent.getSecretValue({ workspaceId, secretId })
-
-await agent.callIntegration({
-  workspaceId,
-  integrationId: 'twitter-v2',
-  details: { endpoint: '/2/tweets', method: 'POST', data: { text: 'Hello!' } }
-})
-```
-
 ---
 
 ## Action Context
@@ -161,7 +148,6 @@ async run({ args, action }) {
     task.description    // Task description
     task.input          // Task input
     action.me.id        // Current agent ID
-    action.integrations // Available integrations
   }
 }
 ```

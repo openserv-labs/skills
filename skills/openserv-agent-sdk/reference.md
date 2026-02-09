@@ -162,12 +162,6 @@ async run({ args, action }) {
   await this.uploadFile({ workspaceId, path, file })
   await this.deleteFile({ workspaceId, fileId })
 
-  // Secrets
-  await this.getSecrets({ workspaceId })
-  await this.getSecretValue({ workspaceId, secretId })
-
-  // Integrations
-  await this.callIntegration({ workspaceId, integrationId, details: { endpoint, method, data } })
 }
 ```
 
