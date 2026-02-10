@@ -9,17 +9,19 @@ Build and deploy custom AI agents for the OpenServ platform using TypeScript.
 
 ## Why build an agent?
 
-An OpenServ agent is a service that runs your code and exposes it on the OpenServ platform—so it can be triggered by workflows, other agents, or paid calls (e.g. x402). The platform sends tasks to your agent; your agent runs your capabilities (APIs, tools, file handling) and returns results. You don't have to use an LLM—e.g. it could be a static API that just returns data—but you'll often want one for reasoning and choosing which capabilities to call; in that case you bring your own—any LLM you have access to (we show OpenAI and Anthropic in examples).
+An OpenServ agent is a service that runs your code and exposes it on the OpenServ platform—so it can be triggered by workflows, other agents, or paid calls (e.g. x402). The platform sends tasks to your agent; your agent runs your capabilities (APIs, tools, file handling) and returns results. You don't have to use an LLM—e.g. it could be a static API that just returns data. If you need LLM reasoning, you have two options: use **runless capabilities** (the platform handles the AI call for you—no API key needed) or use `generate()` (delegates the LLM call to the platform); alternatively, bring your own LLM (any provider you have access to).
 
 ## How it works (the flow)
 
-1. **Define your agent** — System prompt plus _capabilities_ (named functions with a Zod schema and a `run` handler). If you use an LLM, it uses the prompt and capability descriptions to choose when and how to call each capability.
+1. **Define your agent** — System prompt plus _capabilities_. Capabilities come in two flavors: **runnable** (with a Zod schema and a `run` handler) and **runless** (just a name and description—the platform handles the AI call automatically). You can also use `generate()` inside runnable capabilities to delegate LLM calls to the platform.
 2. **Register with the platform** — You need an account on the platform; often the easiest way is to let `provision()` create one for you automatically by creating a wallet and signing up with it (that account is reused on later runs). Call `provision()` (from `@openserv-labs/client`): it creates or reuses a wallet, registers the agent, and writes API key and auth token into your env (or you pass `agent.instance` to bind them directly). In development you can skip setting an endpoint URL; the SDK can use a built-in tunnel to the platform.
 3. **Start the agent** — Call `run(agent)`. The agent listens for tasks, runs your capabilities (and your LLM if you use one), and responds. Use `reference.md` and `troubleshooting.md` for details; `examples/` has full runnable code.
 
 ## What your agent can do
 
-- **Capabilities** — The tools your agent can run (e.g. search, transform data, call APIs). Each has a name, description, schema, and `run()` function.
+- **Runless Capabilities** — Just a name and description. The platform handles the AI call automatically—no API key, no `run()` function needed. Optionally define `inputSchema` and `outputSchema` for structured I/O.
+- **Runnable Capabilities** — The tools your agent can run (e.g. search, transform data, call APIs). Each has a name, description, `inputSchema`, and `run()` function.
+- **`generate()` method** — Delegate LLM calls to the platform from inside any runnable capability. No API key needed—the platform performs the call and records usage. Supports text and structured output.
 - **Task context** — When running in a task, the agent can attach logs and uploads to that task via methods like `addLogToTask()` and `uploadFile()`.
 - **Multi-agent workflows** — Your agent can be part of workflows with other agents; see the **openserv-client** skill for the Platform API, workflows, and ERC-8004 on-chain identity.
 
@@ -30,10 +32,10 @@ An OpenServ agent is a service that runs your code and exposes it on the OpenSer
 ### Installation
 
 ```bash
-npm install @openserv-labs/sdk @openserv-labs/client zod openai
+npm install @openserv-labs/sdk @openserv-labs/client zod
 ```
 
-> **Note:** The SDK requires `openai@^5.x` as a peer dependency.
+> **Note:** `openai` is only needed if you use the `process()` method for direct OpenAI calls. Most agents don't need it—use runless capabilities or `generate()` instead.
 
 ### Minimal Agent
 
@@ -65,19 +67,21 @@ my-agent/
 
 ```bash
 npm init -y && npm pkg set type=module
-npm i @openserv-labs/sdk @openserv-labs/client dotenv openai zod
+npm i @openserv-labs/sdk @openserv-labs/client dotenv zod
 npm i -D @types/node tsx typescript
 ```
 
-> **Note:** The project must use `"type": "module"` in `package.json`. Add a `"dev": "tsx src/agent.ts"` script for local development.
+> **Note:** The project must use `"type": "module"` in `package.json`. Add a `"dev": "tsx src/agent.ts"` script for local development. Only install `openai` if you use the `process()` method for direct OpenAI calls.
 
 ### .env
 
-An agent doesn't require an LLM—it could be a static API that just returns results. If you do use an LLM (e.g. for reasoning and text generation), you bring your own—any provider you have access to. The examples below use OpenAI and Anthropic; set the API key for whichever you use. The rest is filled by `provision()`.
+Most agents don't need any LLM API key—use **runless capabilities** or `generate()` and the platform handles LLM calls for you. If you use `process()` for direct OpenAI calls, set `OPENAI_API_KEY`. The rest is filled by `provision()`.
 
 ```env
-OPENAI_API_KEY=your-openai-key
-# ANTHROPIC_API_KEY=your_anthropic_key  # If using Claude
+# Only needed if you use process() for direct OpenAI calls:
+# OPENAI_API_KEY=your-openai-key
+# ANTHROPIC_API_KEY=your_anthropic_key  # If using Claude directly
+
 # Auto-populated by provision():
 WALLET_PRIVATE_KEY=
 OPENSERV_API_KEY=
@@ -93,24 +97,117 @@ PORT=7378
 
 ## Capabilities
 
-Capabilities are functions your agent can execute. Each requires:
+Capabilities come in two flavors:
+
+### Runless Capabilities (recommended for most use cases)
+
+Runless capabilities don't need a `run` function—the platform handles the AI call automatically. Just provide a name and description:
+
+```typescript
+// Simplest form — just name + description
+agent.addCapability({
+  name: 'generate_haiku',
+  description: 'Generate a haiku poem (5-7-5 syllables) about the given input.'
+})
+
+// With custom input schema
+agent.addCapability({
+  name: 'translate',
+  description: 'Translate text to the target language.',
+  inputSchema: z.object({
+    text: z.string(),
+    targetLanguage: z.string()
+  })
+})
+
+// With structured output
+agent.addCapability({
+  name: 'analyze_sentiment',
+  description: 'Analyze the sentiment of the given text.',
+  outputSchema: z.object({
+    sentiment: z.enum(['positive', 'negative', 'neutral']),
+    confidence: z.number().min(0).max(1)
+  })
+})
+```
+
+- **No `run` function** — the platform performs the LLM call
+- **No API key needed** — the platform handles it
+- `inputSchema` is optional — defaults to `z.object({ input: z.string() })` if omitted
+- `outputSchema` is optional — define it for structured output from the platform
+
+See `examples/haiku-poet-agent.ts` for a complete runless example.
+
+### Runnable Capabilities
+
+Runnable capabilities have a `run` function for custom logic. Each requires:
 
 - `name` - Unique identifier
 - `description` - What it does (helps AI decide when to use it)
-- `schema` - Zod schema defining parameters
+- `inputSchema` - Zod schema defining parameters
 - `run` - Function returning a string
+
+```typescript
+agent.addCapability({
+  name: 'greet',
+  description: 'Greet a user by name',
+  inputSchema: z.object({ name: z.string() }),
+  async run({ args }) {
+    return `Hello, ${args.name}!`
+  }
+})
+```
 
 See `examples/capability-example.ts` for basic capabilities.
 
+> **Note:** The `schema` property still works as an alias for `inputSchema` but is deprecated. Use `inputSchema` for new code.
+
 ### Using Agent Methods
 
-Access `this` in capabilities to use agent methods like `addLogToTask()`, `uploadFile()`, etc.
+Access `this` in capabilities to use agent methods like `addLogToTask()`, `uploadFile()`, `generate()`, etc.
 
 See `examples/capability-with-agent-methods.ts` for logging and file upload patterns.
 
 ---
 
 ## Agent Methods
+
+### `generate()` — Platform-Delegated LLM Calls
+
+The `generate()` method lets you make LLM calls without any API key. The platform performs the call and records usage to the workspace.
+
+```typescript
+// Text generation
+const poem = await this.generate({
+  prompt: `Write a short poem about ${args.topic}`,
+  action
+})
+
+// Structured output (returns validated object matching the schema)
+const metadata = await this.generate({
+  prompt: `Suggest a title and 3 tags for: ${poem}`,
+  outputSchema: z.object({
+    title: z.string(),
+    tags: z.array(z.string()).length(3)
+  }),
+  action
+})
+
+// With conversation history
+const followUp = await this.generate({
+  prompt: 'Suggest a related topic.',
+  messages,  // conversation history from run function
+  action
+})
+```
+
+Parameters:
+- `prompt` (string) — The prompt for the LLM
+- `action` (ActionSchema) — The action context (passed into your `run` function)
+- `outputSchema` (Zod schema, optional) — When provided, returns a validated structured output
+- `messages` (array, optional) — Conversation history for multi-turn generation
+
+The `action` parameter is required because it identifies the workspace/task for billing. Use it inside runnable capabilities where `action` is available from the `run` function arguments.
 
 ### Task Management
 
@@ -297,9 +394,9 @@ See **openserv-client** skill for the full ERC-8004 API reference and troublesho
 
 ## DO NOT USE
 
-- **`this.process()`** inside capabilities - Use direct OpenAI calls instead
-- **`doTask` override** - The SDK handles task execution automatically
-- **`this.completeTask()`** - Task completion is handled by the Runtime API
+- **`this.process()`** inside capabilities — Legacy method requiring an OpenAI API key. Use `this.generate()` instead (platform-delegated, no key needed), or use runless capabilities
+- **`doTask` override** — The SDK handles task execution automatically
+- **`this.completeTask()`** — Task completion is handled by the Runtime API
 
 ---
 

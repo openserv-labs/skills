@@ -17,30 +17,29 @@ Quick reference for common patterns.
 ## Installation
 
 ```bash
-npm install @openserv-labs/sdk @openserv-labs/client zod openai
+npm install @openserv-labs/sdk @openserv-labs/client zod
 ```
 
-## Minimal Agent
+> `openai` is only needed if you use `process()` for direct OpenAI calls. Most agents don't need it—use runless capabilities or `generate()` instead.
+
+## Minimal Agent (Runless)
+
+The simplest agent uses a runless capability—no `run` function, no API key:
 
 ```typescript
 import 'dotenv/config'
 import { Agent, run } from '@openserv-labs/sdk'
 import { provision, triggers } from '@openserv-labs/client'
-import { z } from 'zod'
 
 // 1. Define your agent
 const agent = new Agent({
   systemPrompt: 'You are a helpful assistant.'
 })
 
-// 2. Add capabilities
+// 2. Add a runless capability (platform handles the AI call)
 agent.addCapability({
   name: 'greet',
-  description: 'Greet a user',
-  schema: z.object({ name: z.string() }),
-  async run({ args }) {
-    return `Hello, ${args.name}!`
-  }
+  description: 'Greet the user warmly and helpfully'
 })
 
 async function main() {
@@ -66,6 +65,82 @@ main().catch(console.error)
 ```
 
 > **Tip:** No need for ngrok or other tunneling tools - `run()` opens a tunnel automatically.
+
+## Runless Capabilities
+
+Runless capabilities have no `run` function—the platform handles the AI call automatically:
+
+```typescript
+// Simplest form
+agent.addCapability({
+  name: 'generate_haiku',
+  description: 'Generate a haiku poem (5-7-5 syllables) about the given input.'
+})
+
+// With custom inputSchema
+agent.addCapability({
+  name: 'translate',
+  description: 'Translate text to the target language.',
+  inputSchema: z.object({
+    text: z.string(),
+    targetLanguage: z.string()
+  })
+})
+
+// With structured output via outputSchema
+agent.addCapability({
+  name: 'analyze_sentiment',
+  description: 'Analyze sentiment of the given text.',
+  outputSchema: z.object({
+    sentiment: z.enum(['positive', 'negative', 'neutral']),
+    confidence: z.number().min(0).max(1)
+  })
+})
+```
+
+**Rules:**
+- Cannot have both `run` and `outputSchema`
+- `inputSchema` is optional — defaults to `z.object({ input: z.string() })` if omitted
+- `outputSchema` is optional — the platform uses it to generate structured output
+
+## `generate()` — Platform-Delegated LLM Calls
+
+Use `generate()` inside runnable capabilities to delegate LLM calls to the platform (no API key needed):
+
+```typescript
+agent.addCapability({
+  name: 'createPost',
+  description: 'Create a social media post',
+  inputSchema: z.object({
+    platform: z.enum(['twitter', 'linkedin']),
+    topic: z.string()
+  }),
+  async run({ args, action }) {
+    // Text generation
+    const post = await this.generate({
+      prompt: `Create a compelling ${args.platform} post about: ${args.topic}`,
+      action
+    })
+
+    // Structured output
+    const metadata = await this.generate({
+      prompt: `Suggest 3 hashtags for: ${post}`,
+      outputSchema: z.object({
+        hashtags: z.array(z.string()).length(3)
+      }),
+      action
+    })
+
+    return `${post}\n\n${metadata.hashtags.map(t => `#${t}`).join(' ')}`
+  }
+})
+```
+
+Parameters:
+- `prompt` (string) — The prompt for the LLM
+- `action` (ActionSchema) — The action context from the `run` function
+- `outputSchema` (Zod schema, optional) — Returns validated structured output
+- `messages` (array, optional) — Conversation history for multi-turn generation
 
 ## Zod Schema Patterns
 
@@ -152,6 +227,10 @@ See `openserv-multi-agent-workflows/examples/paid-image-pipeline.md` for a compl
 ```typescript
 // In capability run function, use 'this':
 async run({ args, action }) {
+  // LLM generation (platform-delegated, no API key needed)
+  const text = await this.generate({ prompt: '...', action })
+  const structured = await this.generate({ prompt: '...', outputSchema: z.object({ ... }), action })
+
   // Tasks
   await this.addLogToTask({ workspaceId, taskId, severity: 'info', type: 'text', body: '...' })
   await this.updateTaskStatus({ workspaceId, taskId, status: 'in-progress' })
@@ -249,11 +328,13 @@ See **openserv-client** reference for full ERC-8004 API.
 
 ## Environment Variables
 
-Set the API key for whichever LLM provider you use (examples: OpenAI, Anthropic).
+Most agents don't need any LLM API key—use runless capabilities or `generate()`. Only set `OPENAI_API_KEY` if you use `process()` for direct OpenAI calls.
 
 ```env
-OPENAI_API_KEY=your-key
-# ANTHROPIC_API_KEY=your_anthropic_key  # If using Claude
+# Only needed for process() — most agents don't need this:
+# OPENAI_API_KEY=your-key
+# ANTHROPIC_API_KEY=your_anthropic_key  # If using Claude directly
+
 OPENSERV_API_KEY=auto-populated
 OPENSERV_AUTH_TOKEN=auto-populated
 WALLET_PRIVATE_KEY=auto-populated (also used for x402 payments, USDC top-up, and ERC-8004 registration)

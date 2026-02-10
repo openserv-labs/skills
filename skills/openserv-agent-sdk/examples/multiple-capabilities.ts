@@ -1,13 +1,11 @@
 /**
  * Multiple Capabilities Example
  *
- * Demonstrates adding multiple capabilities at once.
+ * Demonstrates adding multiple capabilities — both runless and runnable with generate().
+ * No LLM API key needed for any of these.
  */
 import { Agent } from '@openserv-labs/sdk'
 import { z } from 'zod'
-import OpenAI from 'openai'
-
-const openai = new OpenAI()
 
 const agent = new Agent({
   systemPrompt: 'You are a versatile text processing assistant.'
@@ -15,64 +13,35 @@ const agent = new Agent({
 
 // Add multiple capabilities at once
 agent.addCapabilities([
+  // Runless capability — platform handles the AI call
   {
     name: 'summarize',
-    description: 'Summarize text content',
-    schema: z.object({
-      text: z.string().describe('Text to summarize'),
-      maxLength: z.number().optional().describe('Max words in summary')
-    }),
-    async run({ args }) {
-      const response = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: `Summarize in ${args.maxLength || 100} words or less.` },
-          { role: 'user', content: args.text }
-        ]
-      })
-      return response.choices[0]?.message?.content || ''
-    }
+    description: 'Summarize the given text content in 100 words or less.'
   },
+  // Runless capability with structured output
+  {
+    name: 'extractKeywords',
+    description: 'Extract the top keywords from the given text.',
+    outputSchema: z.object({
+      keywords: z.array(z.string()).describe('Extracted keywords'),
+      count: z.number().describe('Number of keywords extracted')
+    })
+  },
+  // Runnable capability using generate() for custom logic
   {
     name: 'translate',
     description: 'Translate text to another language',
-    schema: z.object({
+    inputSchema: z.object({
       text: z.string().describe('Text to translate'),
       targetLanguage: z.string().describe('Target language')
     }),
-    async run({ args }) {
-      const response = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: `Translate to ${args.targetLanguage}. Output only the translation.`
-          },
-          { role: 'user', content: args.text }
-        ]
+    async run({ args, action }) {
+      // Use generate() for platform-delegated LLM call (no API key needed)
+      const translation = await this.generate({
+        prompt: `Translate the following text to ${args.targetLanguage}. Output only the translation, nothing else.\n\nText: ${args.text}`,
+        action
       })
-      return response.choices[0]?.message?.content || ''
-    }
-  },
-  {
-    name: 'extractKeywords',
-    description: 'Extract keywords from text',
-    schema: z.object({
-      text: z.string().describe('Text to extract keywords from'),
-      count: z.number().optional().describe('Number of keywords')
-    }),
-    async run({ args }) {
-      const response = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: `Extract ${args.count || 5} keywords. Output as comma-separated list.`
-          },
-          { role: 'user', content: args.text }
-        ]
-      })
-      return response.choices[0]?.message?.content || ''
+      return translation
     }
   }
 ])

@@ -17,7 +17,7 @@ const agent = new Agent({
 agent.addCapability({
   name: 'riskyOperation',
   description: 'An operation that might fail',
-  schema: z.object({
+  inputSchema: z.object({
     shouldFail: z.boolean().optional().describe('Force failure for testing')
   }),
   async run({ args, action }) {

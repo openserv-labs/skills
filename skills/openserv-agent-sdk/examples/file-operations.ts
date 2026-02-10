@@ -13,7 +13,7 @@ const agent = new Agent({
 agent.addCapability({
   name: 'listFiles',
   description: 'List all files in the workspace',
-  schema: z.object({}),
+  inputSchema: z.object({}),
   async run({ action }) {
     if (action?.type !== 'do-task') return 'No workspace context'
 
@@ -26,7 +26,7 @@ agent.addCapability({
 agent.addCapability({
   name: 'saveFile',
   description: 'Save content to a file',
-  schema: z.object({
+  inputSchema: z.object({
     path: z.string().describe('File path'),
     content: z.string().describe('File content')
   }),
@@ -47,7 +47,7 @@ agent.addCapability({
 agent.addCapability({
   name: 'removeFile',
   description: 'Delete a file from the workspace',
-  schema: z.object({
+  inputSchema: z.object({
     fileId: z.number().describe('File ID to delete')
   }),
   async run({ args, action }) {

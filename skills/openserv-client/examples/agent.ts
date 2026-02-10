@@ -3,37 +3,22 @@
  *
  * A simple agent using the SDK and Client packages.
  * Just provision() + run() - that's all you need!
+ * No LLM API key needed — uses a runless capability.
  *
  * Run with: npx tsx agent.ts
  */
 import 'dotenv/config'
 import { Agent, run } from '@openserv-labs/sdk'
 import { provision, triggers } from '@openserv-labs/client'
-import { z } from 'zod'
-import OpenAI from 'openai'
-
-const openai = new OpenAI()
 
 const agent = new Agent({
   systemPrompt: 'You are a helpful assistant.'
 })
 
+// Runless capability — no run function, no API key needed
 agent.addCapability({
   name: 'processRequest',
-  description: 'Process user requests',
-  schema: z.object({
-    input: z.string().describe('The request to process')
-  }),
-  async run({ args }) {
-    console.log(`Processing: ${args.input}`)
-
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [{ role: 'user', content: args.input }]
-    })
-
-    return response.choices[0]?.message?.content || 'No response'
-  }
+  description: 'Process the user request and provide a helpful, thorough response.'
 })
 
 async function main() {
@@ -42,9 +27,10 @@ async function main() {
   // No need to check isProvisioned() first
   const result = await provision({
     agent: {
-      instance: agent, // Binds credentials directly to agent (v1.1+)
+      instance: agent, // Binds credentials directly to agent
       name: 'example-agent',
-      description: 'An example assistant agent'
+      description: 'An example assistant agent',
+      // model_parameters: { model: 'gpt-5', verbosity: 'medium', reasoning_effort: 'high' } // Optional
     },
     workflow: {
       name: 'Instant AI Concierge',

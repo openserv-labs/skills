@@ -13,7 +13,7 @@ const agent = new Agent({
 agent.addCapability({
   name: 'processWithTasks',
   description: 'Process data while managing task status',
-  schema: z.object({
+  inputSchema: z.object({
     data: z.string().describe('Data to process')
   }),
   async run({ args, action }) {
@@ -70,7 +70,7 @@ agent.addCapability({
 agent.addCapability({
   name: 'delegateWork',
   description: 'Create subtasks for other agents',
-  schema: z.object({
+  inputSchema: z.object({
     description: z.string().describe('Task description')
   }),
   async run({ args, action }) {

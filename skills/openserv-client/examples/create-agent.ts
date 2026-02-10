@@ -15,11 +15,12 @@ async function createAgent() {
   await client.authenticate(process.env.WALLET_PRIVATE_KEY)
   console.log('✅ Authenticated')
 
-  // Create agent
+  // Create agent (with optional model_parameters)
   const agent = await client.agents.create({
     name: 'my-custom-agent',
     capabilities_description: 'Processes data and generates reports',
-    endpoint_url: 'https://my-agent.example.com'
+    endpoint_url: 'https://my-agent.example.com',
+    model_parameters: { model: 'gpt-4o', temperature: 0.5, parallel_tool_calls: false }
   })
   console.log(`✅ Created agent: ${agent.id}`)
 

@@ -75,8 +75,11 @@ To force tunnel mode even when `endpointUrl` is configured, set `FORCE_TUNNEL=tr
 
 ---
 
-## OpenAI API errors
+## OpenAI API errors (process() only)
 
+`OPENAI_API_KEY` is only needed if you use the `process()` method for direct OpenAI calls. Most agents don't need it—use **runless capabilities** or `generate()` instead, which delegate LLM calls to the platform (no API key required).
+
+If you do use `process()`:
 - Verify `OPENAI_API_KEY` is set correctly
 - Check API key has credits/billing enabled
 - SDK requires `openai@^5.x` as a peer dependency

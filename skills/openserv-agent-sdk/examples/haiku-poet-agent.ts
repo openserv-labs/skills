@@ -1,65 +1,30 @@
 /**
- * Haiku Poet Agent Example
+ * Haiku Poet Agent Example (Runless Capability)
  *
- * A paid agent that generates haikus using OpenAI.
- * Just define, provision, and run!
+ * A paid agent that generates haikus — no LLM API key needed!
+ * Uses a runless capability: just name + description, the platform handles the AI call.
  *
  * Run with: npx tsx haiku-poet-agent.ts
  */
 import 'dotenv/config'
 import { Agent, run } from '@openserv-labs/sdk'
 import { provision, triggers } from '@openserv-labs/client'
-import { z } from 'zod'
-import OpenAI from 'openai'
-
-const openai = new OpenAI()
 
 // 1. Define your agent
 const agent = new Agent({
   systemPrompt: 'You are a haiku poet. Generate beautiful haikus when asked.'
 })
 
-// 2. Add capabilities
+// 2. Add a runless capability — no run function, no API key needed!
+//    The platform handles the AI call automatically.
 agent.addCapability({
   name: 'generate_haiku',
-  description: 'Generate a haiku poem about a given topic',
-  schema: z.object({
-    topic: z.string().describe('The topic or theme for the haiku')
-  }),
-  async run({ args, action }) {
-    console.log(`Generating haiku about: ${args.topic}`)
-
-    // Log progress if in task context
-    if (action?.type === 'do-task' && action.task) {
-      await this.addLogToTask({
-        workspaceId: action.workspace.id,
-        taskId: action.task.id,
-        severity: 'info',
-        type: 'text',
-        body: `Creating haiku about "${args.topic}"...`
-      })
-    }
-
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [
-        {
-          role: 'system',
-          content:
-            'You are a haiku poet. Write a haiku (5-7-5 syllables) about the given topic. Only output the haiku, nothing else.'
-        },
-        { role: 'user', content: args.topic }
-      ]
-    })
-
-    const haiku = completion.choices[0]?.message?.content || 'Failed to generate haiku'
-    console.log(`Haiku:\n${haiku}`)
-    return haiku
-  }
+  description:
+    'Generate a haiku poem (5-7-5 syllables) about the given input. Only output the haiku, nothing else.'
 })
 
 async function main() {
-  // 3. Provision with agent instance binding (v2.1+)
+  // 3. Provision with agent instance binding
   const result = await provision({
     agent: {
       instance: agent, // Binds credentials directly to agent
