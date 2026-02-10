@@ -134,6 +134,37 @@ await client.agents.saveAuthToken({ id: 123, authTokenHash })
 
 ---
 
+## Models API (Discovery)
+
+Discover available LLM models and their parameter schemas at runtime. Use this to build valid `model_parameters` objects for `agents.create`, `agents.update`, and `provision()`.
+
+```typescript
+const { models, default: defaultModel } = await client.models.list()
+
+// defaultModel: 'gpt-5-mini'
+// models: [
+//   {
+//     model: 'gpt-5-mini',
+//     provider: 'openai',
+//     parameters: {
+//       verbosity: { type: 'enum', values: ['low', 'medium', 'high'], default: 'medium' },
+//       reasoning_effort: { type: 'enum', values: ['low', 'medium', 'high'], default: 'low' }
+//     }
+//   },
+//   {
+//     model: 'gpt-4.1',
+//     provider: 'openai',
+//     parameters: {
+//       temperature: { type: 'number', min: 0, max: 1, default: 0 },
+//       parallel_tool_calls: { type: 'boolean', default: false }
+//     }
+//   },
+//   ...
+// ]
+```
+
+---
+
 ## Workflows API
 
 ```typescript
