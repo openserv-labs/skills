@@ -7,26 +7,23 @@ description: Build and deploy autonomous AI agents using the OpenServ SDK (@open
 
 Build and deploy custom AI agents for the OpenServ platform using TypeScript.
 
-**Reference files:**
+## Why build an agent?
 
-- `reference.md` - Quick reference for common patterns
-- `troubleshooting.md` - Common issues and solutions
-- `examples/` - Complete code examples
+An OpenServ agent is a service that runs your code and exposes it on the OpenServ platform—so it can be triggered by workflows, other agents, or paid calls (e.g. x402). The platform sends tasks to your agent; your agent runs your capabilities (APIs, tools, file handling) and returns results. You don't have to use an LLM—e.g. it could be a static API that just returns data—but you'll often want one for reasoning and choosing which capabilities to call; in that case you bring your own—any LLM you have access to (we show OpenAI and Anthropic in examples).
 
-## What's New in v2.3
+## How it works (the flow)
 
-- **`DISABLE_TUNNEL` Env Var** - Set `DISABLE_TUNNEL=true` for production deployments (e.g. Cloud Run). `run()` starts only the HTTP server, no WebSocket tunnel.
-- **`FORCE_TUNNEL` Env Var** - Set `FORCE_TUNNEL=true` to force tunnel mode even when an `endpointUrl` is configured.
-- **Public Health Check** - The `/health` route now responds before auth middleware, so the platform health cron can reach it without credentials.
-- **Binary Tunnel Responses** - Tunnel responses are sent as binary frames, preserving gzip, images, and other binary payloads transparently.
+1. **Define your agent** — System prompt plus _capabilities_ (named functions with a Zod schema and a `run` handler). If you use an LLM, it uses the prompt and capability descriptions to choose when and how to call each capability.
+2. **Register with the platform** — You need an account on the platform; often the easiest way is to let `provision()` create one for you automatically by creating a wallet and signing up with it (that account is reused on later runs). Call `provision()` (from `@openserv-labs/client`): it creates or reuses a wallet, registers the agent, and writes API key and auth token into your env (or you pass `agent.instance` to bind them directly). In development you can skip setting an endpoint URL; the SDK can use a built-in tunnel to the platform.
+3. **Start the agent** — Call `run(agent)`. The agent listens for tasks, runs your capabilities (and your LLM if you use one), and responds. Use `reference.md` and `troubleshooting.md` for details; `examples/` has full runnable code.
 
-### Earlier in v2.x
+## What your agent can do
 
-- **Built-in Tunnel** - The `run()` function auto-connects to `agents-proxy.openserv.ai`
-- **No Endpoint URL Needed** - Skip `endpointUrl` in `provision()` during development
-- **Automatic Port Fallback** - If your port is busy, the agent finds an available one
-- **Direct Credential Binding** - `provision()` can bind credentials directly to agent instance via `agent.instance`
-- **`setCredentials()` Method** - Manually bind API key and auth token to agent
+- **Capabilities** — The tools your agent can run (e.g. search, transform data, call APIs). Each has a name, description, schema, and `run()` function.
+- **Task context** — When running in a task, the agent can attach logs and uploads to that task via methods like `addLogToTask()` and `uploadFile()`.
+- **Multi-agent workflows** — Your agent can be part of workflows with other agents; see the **openserv-client** skill for the Platform API, workflows, and ERC-8004 on-chain identity.
+
+**Reference:** `reference.md` (patterns) · `troubleshooting.md` (common issues) · `examples/` (full examples)
 
 ## Quick Start
 
@@ -76,8 +73,11 @@ npm i -D @types/node tsx typescript
 
 ### .env
 
+An agent doesn't require an LLM—it could be a static API that just returns results. If you do use an LLM (e.g. for reasoning and text generation), you bring your own—any provider you have access to. The examples below use OpenAI and Anthropic; set the API key for whichever you use. The rest is filled by `provision()`.
+
 ```env
 OPENAI_API_KEY=your-openai-key
+# ANTHROPIC_API_KEY=your_anthropic_key  # If using Claude
 # Auto-populated by provision():
 WALLET_PRIVATE_KEY=
 OPENSERV_API_KEY=
@@ -258,8 +258,8 @@ const result = await provision({
     name: 'My Service',
     goal: 'Detailed description of what the workflow does',
     trigger: triggers.x402({ name: 'My Service', description: '...', price: '0.01', timeout: 600 }),
-    task: { description: 'Process requests' },
-  },
+    task: { description: 'Process requests' }
+  }
 })
 
 // Reload .env to pick up WALLET_PRIVATE_KEY written by provision()
@@ -274,12 +274,12 @@ try {
     workflowId: result.workflowId,
     privateKey: process.env.WALLET_PRIVATE_KEY!,
     name: 'My Service',
-    description: 'What this agent does',
+    description: 'What this agent does'
   })
 
-  console.log(`Agent ID: ${erc8004.agentId}`)  // "8453:42"
+  console.log(`Agent ID: ${erc8004.agentId}`) // "8453:42"
   console.log(`TX: ${erc8004.blockExplorerUrl}`)
-  console.log(`Scan: ${erc8004.scanUrl}`)      // "https://www.8004scan.io/agents/base/42"
+  console.log(`Scan: ${erc8004.scanUrl}`) // "https://www.8004scan.io/agents/base/42"
 } catch (error) {
   console.warn('ERC-8004 registration skipped:', error instanceof Error ? error.message : error)
 }

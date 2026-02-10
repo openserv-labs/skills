@@ -249,8 +249,11 @@ See **openserv-client** reference for full ERC-8004 API.
 
 ## Environment Variables
 
+Set the API key for whichever LLM provider you use (examples: OpenAI, Anthropic).
+
 ```env
 OPENAI_API_KEY=your-key
+# ANTHROPIC_API_KEY=your_anthropic_key  # If using Claude
 OPENSERV_API_KEY=auto-populated
 OPENSERV_AUTH_TOKEN=auto-populated
 WALLET_PRIVATE_KEY=auto-populated (also used for x402 payments, USDC top-up, and ERC-8004 registration)

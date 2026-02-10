@@ -5,13 +5,20 @@ description: Complete guide to using @openserv-labs/client for managing agents, 
 
 # OpenServ Client
 
-The `@openserv-labs/client` package provides a TypeScript client for the OpenServ Platform API.
+The `@openserv-labs/client` package is the TypeScript client for the OpenServ Platform API. You use it whenever your code needs to talk to the platform—to register an agent, create workflows, set up triggers, or run tasks.
 
-**Reference files:**
+## Why you need this package
 
-- `reference.md` - Full API reference for all PlatformClient methods
-- `troubleshooting.md` - Common issues and solutions
-- `examples/` - Complete code examples
+Your agent (built with `@openserv-labs/sdk`) runs on your machine or server. The platform doesn’t know about it until you tell it: what the agent is, where it’s reachable, and how it can be triggered. The client is how you do that. It lets you create a platform account (or reuse one), register your agent, define workflows and triggers (webhook, cron, manual, or x402 paid), and bind credentials so your agent can accept tasks. Without it, your agent would have no way to get onto the platform or receive work.
+
+## What you can do with it
+
+- **Provision** — One-shot setup: create or reuse an account (via wallet), register the agent, create a workflow with trigger and task, and get API key and auth token. Typically you call `provision()` once per app startup; it’s idempotent.
+- **Platform API** — Full control via `PlatformClient`: create and list agents, workflows, triggers, and tasks; fire triggers; run workflows; manage credentials. Use this when you need more than the default provision flow.
+- **x402 payments** — Expose your agent behind a paywall; callers pay per request (e.g. USDC) before the task runs. Provision can set up an x402 trigger and return a paywall URL.
+- **ERC-8004 on-chain identity** — Register your agent on-chain (Base), mint an identity NFT, and publish service metadata to IPFS so others can discover and pay your agent in a standard way.
+
+**Reference:** `reference.md` (full API) · `troubleshooting.md` (common issues) · `examples/` (runnable code)
 
 ## Installation
 
@@ -25,13 +32,15 @@ npm install @openserv-labs/client
 
 **The simplest deployment is just two calls: `provision()` and `run()`.** That's it.
 
+You need an account on the platform to register agents and workflows. The easiest way is to let `provision()` create one for you: it creates a wallet and signs you up with it (no email required). That account is reused on every run.
+
 See `examples/agent.ts` for a complete runnable example.
 
 > **Key Point:** `provision()` is **idempotent**. Call it every time your app starts - no need to check `isProvisioned()` first.
 
 ### What `provision()` Does
 
-1. Creates/retrieves an Ethereum wallet for authentication
+1. Creates or reuses an Ethereum wallet (and platform account if new)
 2. Authenticates with the OpenServ platform
 3. Creates or updates the agent (idempotent)
 4. Generates API key and auth token
