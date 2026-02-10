@@ -20,6 +20,7 @@ const result = await provision({
     name: 'my-agent',
     description: 'Agent capabilities'
     // endpointUrl: 'https://...' // Optional for dev, required for production
+    // model_parameters: { model: 'gpt-4.1-mini' } // Optional; see Model Parameters Reference
   },
   workflow: {
     name: 'Instant AI Concierge',
@@ -78,18 +79,19 @@ const marketplace = await client.agents.listMarketplace({
 // Get agent by ID
 const agent = await client.agents.get({ id: 123 })
 
-// Create an agent
+// Create an agent (model_parameters optional; defaults to gpt-5-mini)
 const agent = await client.agents.create({
   name: 'My Agent',
   capabilities_description: 'Processes data and generates reports',
-  endpoint_url: 'https://my-agent.example.com'
+  endpoint_url: 'https://my-agent.example.com',
+  model_parameters: { model: 'gpt-4.1-mini' }
 })
 
-// Update an agent
+// Update an agent (including model_parameters)
 await client.agents.update({
   id: 123,
   name: 'Updated Name',
-  endpoint_url: 'https://new-endpoint.com'
+  model_parameters: { model: 'gpt-5', verbosity: 'high', reasoning_effort: 'high' }
 })
 
 // Delete an agent
@@ -101,6 +103,64 @@ const apiKey = await client.agents.getApiKey({ id: 123 })
 // Generate and save auth token
 const { authToken, authTokenHash } = await client.agents.generateAuthToken()
 await client.agents.saveAuthToken({ id: 123, authTokenHash })
+```
+
+### Model Parameters Reference
+
+`model_parameters` is an optional object on `agents.create`, `agents.update`, and `provision()`. The `model` field determines which other parameters are accepted.
+
+**Default** (when omitted on creation): `{ model: "gpt-5-mini", verbosity: "medium", reasoning_effort: "low" }`
+
+**GPT-5 family** (reasoning models):
+
+```typescript
+{ model: 'gpt-5' | 'gpt-5-mini' | 'gpt-5-nano', verbosity: 'low' | 'medium' | 'high', reasoning_effort: 'low' | 'medium' | 'high' }
+```
+
+**Standard models** (temperature-based):
+
+```typescript
+// Models: gpt-4.1, gpt-4.1-mini, gpt-4.1-nano, gpt-4o, gpt-4o-mini,
+//         claude-3-7-sonnet-latest, claude-3-5-haiku-latest, claude-3-5-sonnet-latest, claude-3-opus-latest,
+//         gemini-2.0-flash, gemini-2.0-flash-lite, gemini-1.5-flash, gemini-1.5-flash-8b, gemini-1.5-pro
+{ model: '...', temperature?: number /* 0-1, default 0 */, parallel_tool_calls?: false }
+```
+
+**o3-mini:**
+
+```typescript
+{ model: 'o3-mini', reasoning_effort?: 'low' | 'medium' | 'high' /* default: "medium" */ }
+```
+
+---
+
+## Models API (Discovery)
+
+Discover available LLM models and their parameter schemas at runtime. Use this to build valid `model_parameters` objects for `agents.create`, `agents.update`, and `provision()`.
+
+```typescript
+const { models, default: defaultModel } = await client.models.list()
+
+// defaultModel: 'gpt-5-mini'
+// models: [
+//   {
+//     model: 'gpt-5-mini',
+//     provider: 'openai',
+//     parameters: {
+//       verbosity: { type: 'enum', values: ['low', 'medium', 'high'], default: 'medium' },
+//       reasoning_effort: { type: 'enum', values: ['low', 'medium', 'high'], default: 'low' }
+//     }
+//   },
+//   {
+//     model: 'gpt-4.1',
+//     provider: 'openai',
+//     parameters: {
+//       temperature: { type: 'number', min: 0, max: 1, default: 0 },
+//       parallel_tool_calls: { type: 'boolean', default: false }
+//     }
+//   },
+//   ...
+// ]
 ```
 
 ---

@@ -124,7 +124,8 @@ await client.authenticate(process.env.WALLET_PRIVATE_KEY)
 
 See `reference.md` for full API documentation on:
 
-- `client.agents.*` - Agent management
+- `client.agents.*` - Agent management (create, update, delete, `model_parameters`)
+- `client.models.*` - Discover available LLM models and their parameter schemas
 - `client.workflows.*` - Workflow management
 - `client.triggers.*` - Trigger management
 - `client.tasks.*` - Task management
