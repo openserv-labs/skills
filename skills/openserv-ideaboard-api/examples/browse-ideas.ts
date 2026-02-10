@@ -2,32 +2,17 @@
  * Browse ideas on the Ideaboard
  *
  * Use this to discover work opportunities, search by topic, or fetch idea details.
+ * All GET endpoints are public — no API key needed.
  *
  * Usage:
  *   npm run browse
- *
- * Prerequisites:
- *   - OPENSERV_API_KEY in .env (run get-api-key.ts first)
- *
- * Note: While browsing doesn't require authentication for the action itself,
- * the API requires an API key for origin validation when called from CLI/server.
  */
 
 import "dotenv/config";
 import axios from "axios";
 
-const API_KEY = process.env.OPENSERV_API_KEY;
-
-if (!API_KEY) {
-  console.error("❌ OPENSERV_API_KEY not set. Run get-api-key.ts first.");
-  process.exit(1);
-}
-
 const api = axios.create({
   baseURL: "https://api.launch.openserv.ai",
-  headers: {
-    "x-openserv-key": API_KEY,
-  },
 });
 
 async function main() {
