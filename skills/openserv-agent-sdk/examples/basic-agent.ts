@@ -20,7 +20,7 @@ const agent = new Agent({
 agent.addCapability({
   name: 'greet',
   description: 'Greet a user by name',
-  schema: z.object({
+  inputSchema: z.object({
     name: z.string().describe('The name of the user to greet')
   }),
   async run({ args }) {

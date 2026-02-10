@@ -1,14 +1,11 @@
 /**
  * Capability with Agent Methods Example
  *
- * Demonstrates using agent methods (this.addLogToTask, this.uploadFile, etc.)
- * inside capabilities.
+ * Demonstrates using agent methods (this.generate, this.addLogToTask, this.uploadFile, etc.)
+ * inside capabilities. Uses generate() for platform-delegated LLM calls — no API key needed.
  */
 import { Agent } from '@openserv-labs/sdk'
 import { z } from 'zod'
-import OpenAI from 'openai'
-
-const openai = new OpenAI()
 
 const agent = new Agent({
   systemPrompt: 'You are a report generation assistant.'
@@ -17,7 +14,7 @@ const agent = new Agent({
 agent.addCapability({
   name: 'generateReport',
   description: 'Generate a report and save it to the workspace',
-  schema: z.object({
+  inputSchema: z.object({
     topic: z.string().describe('Report topic'),
     format: z.enum(['brief', 'detailed']).optional()
   }),
@@ -37,15 +34,11 @@ agent.addCapability({
         body: `Starting ${format} report on "${topic}"...`
       })
 
-      // Generate report
-      const response = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: `Generate a ${format} report.` },
-          { role: 'user', content: `Report topic: ${topic}` }
-        ]
+      // Generate report using platform-delegated LLM call (no API key needed)
+      const report = await this.generate({
+        prompt: `Generate a ${format} report on the following topic: ${topic}`,
+        action
       })
-      const report = response.choices[0]?.message?.content || 'Report generation failed'
 
       // Upload as file
       await this.uploadFile({
@@ -68,14 +61,10 @@ agent.addCapability({
     }
 
     // Fallback if no task context
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [
-        { role: 'system', content: `Generate a ${format} report.` },
-        { role: 'user', content: `Report topic: ${topic}` }
-      ]
+    return await this.generate({
+      prompt: `Generate a ${format} report on the following topic: ${topic}`,
+      action
     })
-    return response.choices[0]?.message?.content || 'Report generation failed'
   }
 })
 

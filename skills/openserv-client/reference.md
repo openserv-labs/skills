@@ -18,8 +18,9 @@ const result = await provision({
   agent: {
     instance: agent, // Binds credentials directly to agent (v1.1+)
     name: 'my-agent',
-    description: 'Agent capabilities'
+    description: 'Agent capabilities',
     // endpointUrl: 'https://...' // Optional for dev, required for production
+    // model_parameters: { model: 'gpt-5', verbosity: 'medium', reasoning_effort: 'high' } // Optional
   },
   workflow: {
     name: 'Instant AI Concierge',
@@ -82,14 +83,16 @@ const agent = await client.agents.get({ id: 123 })
 const agent = await client.agents.create({
   name: 'My Agent',
   capabilities_description: 'Processes data and generates reports',
-  endpoint_url: 'https://my-agent.example.com'
+  endpoint_url: 'https://my-agent.example.com',
+  model_parameters: { model: 'gpt-4o', temperature: 0.5, parallel_tool_calls: false } // Optional
 })
 
 // Update an agent
 await client.agents.update({
   id: 123,
   name: 'Updated Name',
-  endpoint_url: 'https://new-endpoint.com'
+  endpoint_url: 'https://new-endpoint.com',
+  model_parameters: { model: 'gpt-5', verbosity: 'medium', reasoning_effort: 'high' } // Optional
 })
 
 // Delete an agent
@@ -384,6 +387,56 @@ const connectionId = await client.integrations.getOrCreateConnection('webhook-tr
 ```
 
 Integration identifiers: `webhook-trigger`, `x402-trigger`, `cron-trigger`, `manual-trigger`
+
+---
+
+## Models API
+
+Discover available LLM models and their parameter schemas:
+
+```typescript
+const { models, default: defaultModel } = await client.models.list()
+
+// defaultModel: 'gpt-5-mini'
+// models: array of ModelInfo objects
+
+for (const model of models) {
+  console.log(`${model.model} (${model.provider})`)
+  // model.parameters: Record<string, ModelParameterMeta>
+  // Each parameter has: type ('number' | 'boolean' | 'enum'), default, min?, max?, values?
+}
+```
+
+### Types
+
+```typescript
+interface ModelParameterMeta {
+  type: 'number' | 'boolean' | 'enum'
+  default: number | boolean | string
+  min?: number     // For number types
+  max?: number     // For number types
+  values?: string[] // For enum types
+}
+
+interface ModelInfo {
+  model: string
+  provider: string
+  parameters: Record<string, ModelParameterMeta>
+}
+
+interface ModelsResponse {
+  models: ModelInfo[]
+  default: string // Default model name
+}
+```
+
+Use `model_parameters` in `agents.create()`, `agents.update()`, or `provision()` to configure the model:
+
+```typescript
+// Example model_parameters values:
+{ model: 'gpt-5', verbosity: 'medium', reasoning_effort: 'high' }
+{ model: 'gpt-4o', temperature: 0.5, parallel_tool_calls: false }
+```
 
 ---
 

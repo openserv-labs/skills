@@ -15,6 +15,8 @@ Your agent (built with `@openserv-labs/sdk`) runs on your machine or server. The
 
 - **Provision** — One-shot setup: create or reuse an account (via wallet), register the agent, create a workflow with trigger and task, and get API key and auth token. Typically you call `provision()` once per app startup; it’s idempotent.
 - **Platform API** — Full control via `PlatformClient`: create and list agents, workflows, triggers, and tasks; fire triggers; run workflows; manage credentials. Use this when you need more than the default provision flow.
+- **Model Parameters** — Configure which LLM model and parameters the platform uses for your agent's tasks. Set `model_parameters` on agent creation/update or via `provision()`.
+- **Models API** — Discover available LLM models and their parameter schemas via `client.models.list()`.
 - **x402 payments** — Expose your agent behind a paywall; callers pay per request (e.g. USDC) before the task runs. Provision can set up an x402 trigger and return a paywall URL.
 - **ERC-8004 on-chain identity** — Register your agent on-chain (Base), mint an identity NFT, and publish service metadata to IPFS so others can discover and pay your agent in a standard way.
 
@@ -77,7 +79,8 @@ await provision({
   agent: {
     instance: agent, // Calls agent.setCredentials() automatically
     name: 'my-agent',
-    description: '...'
+    description: '...',
+    model_parameters: { model: 'gpt-5', verbosity: 'medium', reasoning_effort: 'high' } // Optional
   },
   workflow: { ... }
 })
@@ -87,6 +90,34 @@ await run(agent)
 ```
 
 This eliminates the need to manually set `OPENSERV_API_KEY` environment variables.
+
+### Model Parameters
+
+The optional `model_parameters` field controls which LLM model and parameters the platform uses when executing tasks for your agent (including runless capabilities and `generate()` calls). If not provided, the platform default is used.
+
+```typescript
+await provision({
+  agent: {
+    instance: agent,
+    name: 'my-agent',
+    description: '...',
+    model_parameters: {
+      model: 'gpt-4o',
+      temperature: 0.5,
+      parallel_tool_calls: false
+    }
+  },
+  workflow: { ... }
+})
+```
+
+Discover available models and their parameters:
+
+```typescript
+const { models, default: defaultModel } = await client.models.list()
+// models: [{ model: 'gpt-5', provider: 'openai', parameters: { ... } }, ...]
+// default: 'gpt-5-mini'
+```
 
 ### Provision Result
 
@@ -128,6 +159,7 @@ See `reference.md` for full API documentation on:
 - `client.workflows.*` - Workflow management
 - `client.triggers.*` - Trigger management
 - `client.tasks.*` - Task management
+- `client.models.*` - Available LLM models and parameters
 - `client.integrations.*` - Integration connections
 - `client.payments.*` - x402 payments
 - `client.web3.*` - Credits top-up
