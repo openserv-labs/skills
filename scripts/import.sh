@@ -42,10 +42,7 @@ import_skill() {
     local target_path="$REPO_DIR/skills/$skill"
 
     # Check if skill exists in ~/.cursor/skills
-    if [ -L "$source_path" ]; then
-        print_warning "$skill is a symlink in ~/.cursor/skills, skipping (nothing to import)"
-        return 0
-    elif [ ! -d "$source_path" ]; then
+    if [ ! -d "$source_path" ]; then
         print_error "Skill '$skill' not found in ~/.cursor/skills"
         return 1
     fi
@@ -57,7 +54,11 @@ import_skill() {
     fi
 
     # Copy skill directory from ~/.cursor/skills to repo
-    cp -r "$source_path" "$target_path"
+    # Use -L to resolve symlinks
+    if [ -L "$source_path" ]; then
+        print_success "Resolving symlink for $skill..."
+    fi
+    cp -rL "$source_path" "$target_path"
     print_success "Imported $skill from ~/.cursor/skills"
 }
 
