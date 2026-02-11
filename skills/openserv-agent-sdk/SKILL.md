@@ -284,6 +284,23 @@ triggers.manual()
 
 > **Important:** Always set `timeout` to at least **600 seconds** (10 minutes) for webhook and x402 triggers. Agents often take significant time to process requests — especially when performing research, content generation, or other complex tasks. A low timeout will cause premature failures. For multi-agent pipelines with many sequential steps, consider 900 seconds or more.
 
+## API Keys: Agent vs User
+
+`provision()` creates two types of credentials. They are **not interchangeable**:
+
+- **`OPENSERV_API_KEY`** (Agent API key) — Used internally by the SDK to authenticate when receiving tasks. Set automatically by `provision()` when you pass `agent.instance`. **Do not** use this key with `PlatformClient`.
+- **`WALLET_PRIVATE_KEY`** / **`OPENSERV_USER_API_KEY`** (User credentials) — Used with `PlatformClient` to make management calls (list tasks, debug workflows, etc.). Authenticate with `client.authenticate(walletKey)` or pass `apiKey` to the constructor.
+
+If you need to debug tasks or inspect workflows, use wallet authentication:
+
+```typescript
+const client = new PlatformClient()
+await client.authenticate(process.env.WALLET_PRIVATE_KEY)
+const tasks = await client.tasks.list({ workflowId: result.workflowId })
+```
+
+See `troubleshooting.md` for details on 401 errors.
+
 ---
 
 ## Deployment

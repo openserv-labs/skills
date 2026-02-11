@@ -136,6 +136,20 @@ interface ProvisionResult {
 
 ---
 
+## API Keys: Agent vs User
+
+`provision()` creates two types of credentials. They are **not interchangeable**:
+
+| Credential    | Env Variable            | Used By          | Purpose                                                                                                                                       |
+| ------------- | ----------------------- | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Agent API key | `OPENSERV_API_KEY`      | SDK internals    | Authenticates the agent when receiving tasks from the platform. Set automatically via `agent.instance`. **Do not** use with `PlatformClient`. |
+| Wallet key    | `WALLET_PRIVATE_KEY`    | `PlatformClient` | Authenticates your account for management calls (list tasks, debug workflows, manage agents).                                                 |
+| User API key  | `OPENSERV_USER_API_KEY` | `PlatformClient` | Alternative to wallet auth. Get from the platform dashboard.                                                                                  |
+
+If you get a **401 Unauthorized** when using `PlatformClient`, you are likely using the agent API key by mistake. Use wallet authentication or the user API key instead.
+
+---
+
 ## PlatformClient: Full API Access
 
 For advanced use cases, use `PlatformClient` directly:
@@ -143,14 +157,14 @@ For advanced use cases, use `PlatformClient` directly:
 ```typescript
 import { PlatformClient } from '@openserv-labs/client'
 
-// Using API key
-const client = new PlatformClient({
-  apiKey: process.env.OPENSERV_USER_API_KEY
-})
-
-// Or using wallet authentication
+// Using wallet authentication (recommended — uses wallet from provision)
 const client = new PlatformClient()
 await client.authenticate(process.env.WALLET_PRIVATE_KEY)
+
+// Or using User API key (NOT the agent API key)
+const client = new PlatformClient({
+  apiKey: process.env.OPENSERV_USER_API_KEY // NOT OPENSERV_API_KEY
+})
 ```
 
 See `reference.md` for full API documentation on:
@@ -283,10 +297,8 @@ for (const service of services) {
 
 ### Firing Triggers
 
-#### Webhook
-
 ```typescript
-// By workflow ID (recommended)
+// By workflow ID (recommended — resolves the URL automatically)
 const result = await client.triggers.fireWebhook({
   workflowId: 123,
   input: { query: 'hello world' }
@@ -351,12 +363,12 @@ try {
     workflowId: result.workflowId,
     privateKey: process.env.WALLET_PRIVATE_KEY!,
     name: 'My Agent',
-    description: 'What this agent does',
+    description: 'What this agent does'
   })
 
-  console.log(`Agent ID: ${erc8004.agentId}`)         // "8453:42"
+  console.log(`Agent ID: ${erc8004.agentId}`) // "8453:42"
   console.log(`Explorer: ${erc8004.blockExplorerUrl}`)
-  console.log(`Scan: ${erc8004.scanUrl}`)              // "https://www.8004scan.io/agents/base/42"
+  console.log(`Scan: ${erc8004.scanUrl}`) // "https://www.8004scan.io/agents/base/42"
 } catch (error) {
   console.warn('ERC-8004 registration skipped:', error instanceof Error ? error.message : error)
 }
