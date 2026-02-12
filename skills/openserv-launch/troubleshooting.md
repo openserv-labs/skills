@@ -34,7 +34,7 @@ Common issues and solutions when launching tokens.
 
 - Use a full 42-character address starting with `0x`
 - Ensure all characters are valid hexadecimal (0-9, a-f, A-F)
-- Verify the address using viem's `isAddress()` or ethers' `isAddress()`
+- Verify the address using viem's `isAddress()`
 
 ### "Image URL must be a direct link to an image file"
 
