@@ -223,10 +223,133 @@ const tasks = await agent.getTasks({ workspaceId })
 ### File Operations
 
 ```typescript
+// getFiles returns: { id, path, fullUrl, summary, size, state }[]
+// Use fullUrl to download file content
 const files = await agent.getFiles({ workspaceId })
+const content = await fetch(files[0].fullUrl).then(r => r.text())
+
 await agent.uploadFile({ workspaceId, path: 'output.txt', file: 'content', taskIds: [taskId] })
 await agent.deleteFile({ workspaceId, fileId })
 ```
+
+### `callIntegration()` — External Service Proxy
+
+Call external APIs through the platform's OAuth proxy. Auth is handled automatically — the user connects integrations in the platform UI.
+
+```typescript
+const response = await this.callIntegration({
+  workspaceId,
+  integrationId: 'google-mail',
+  details: {
+    endpoint: '/gmail/v1/users/me/messages',
+    method: 'GET',
+    params: { maxResults: 10, labelIds: 'INBOX' }
+  }
+})
+```
+
+Pass query parameters via `params`, not in the URL. Use `data` for request bodies. Errors are returned as response objects (not thrown) — always check for error fields before processing. See `examples/integrations.ts` for patterns.
+
+| ID | Key Endpoints |
+|---|---|
+| `google-mail` | `/gmail/v1/users/me/messages`, `.../messages/{id}` |
+| `google-calendar` | `/calendar/v3/calendars/primary/events`, `/calendar/v3/users/me/calendarList` |
+| `google-drive` | `/drive/v3/files` |
+| `slack` | `/chat.postMessage`, `/conversations.list`, `/search.messages` |
+| `twitter-v2` | `/2/tweets/search/recent`, `/2/tweets` |
+| `youtube` | `/youtube/v3/channels`, `/youtube/v3/search` |
+| `jira` | `/rest/api/3/search`, `/rest/api/3/issue` |
+
+### All Available Operations via `callIntegration()`
+
+`callIntegration()` can call any endpoint the external API supports. Below is the full list of operations available per integration.
+
+#### Google Mail (`google-mail`)
+
+| Operation | Method | Endpoint | Data / Params |
+|---|---|---|---|
+| List messages | GET | `/gmail/v1/users/me/messages` | `params: { maxResults, labelIds }` |
+| Get message | GET | `/gmail/v1/users/me/messages/{id}` | `params: { format: 'metadata', metadataHeaders: 'From,To,Subject,Date' }` |
+| Send message | POST | `/gmail/v1/users/me/messages/send` | `data: { raw: base64urlEncodedMimeMessage }` |
+| List labels | GET | `/gmail/v1/users/me/labels` | |
+| Get thread | GET | `/gmail/v1/users/me/threads/{id}` | |
+| Modify message labels | POST | `/gmail/v1/users/me/messages/{id}/modify` | `data: { addLabelIds, removeLabelIds }` |
+| Trash message | POST | `/gmail/v1/users/me/messages/{id}/trash` | |
+
+#### Google Calendar (`google-calendar`)
+
+| Operation | Method | Endpoint | Data / Params |
+|---|---|---|---|
+| List calendars | GET | `/calendar/v3/users/me/calendarList` | |
+| List events | GET | `/calendar/v3/calendars/primary/events` | `params: { timeMin, timeMax, maxResults, singleEvents: 'true', orderBy: 'startTime' }` |
+| Create event | POST | `/calendar/v3/calendars/primary/events` | `data: { summary, start: { dateTime }, end: { dateTime }, description? }` |
+| Update event | PUT | `/calendar/v3/calendars/primary/events/{id}` | `data: { summary, start, end }` |
+| Delete event | DELETE | `/calendar/v3/calendars/primary/events/{id}` | |
+| Get event | GET | `/calendar/v3/calendars/primary/events/{id}` | |
+
+#### Google Drive (`google-drive`)
+
+| Operation | Method | Endpoint | Data / Params |
+|---|---|---|---|
+| List files | GET | `/drive/v3/files` | `params: { pageSize, fields, orderBy, q? }` |
+| Get file metadata | GET | `/drive/v3/files/{id}` | `params: { fields: 'id,name,mimeType,modifiedTime,size,webViewLink' }` |
+| Search files | GET | `/drive/v3/files` | `params: { q: "name contains 'report'" }` |
+| Create folder | POST | `/drive/v3/files` | `data: { name, mimeType: 'application/vnd.google-apps.folder' }` |
+| Delete file | DELETE | `/drive/v3/files/{id}` | |
+| Copy file | POST | `/drive/v3/files/{id}/copy` | `data: { name }` |
+
+#### Slack (`slack`)
+
+| Operation | Method | Endpoint | Data / Params |
+|---|---|---|---|
+| Send message | POST | `/chat.postMessage` | `data: { channel, text, as_user?, thread_ts?, blocks? }` |
+| Send ephemeral | POST | `/chat.postEphemeral` | `data: { channel, user, text }` |
+| List channels | GET | `/conversations.list` | |
+| Create channel | POST | `/conversations.create` | `data: { name, is_private? }` |
+| Channel history | GET | `/conversations.history` | `params: { channel, limit?, latest?, oldest? }` |
+| Get message | GET | `/conversations.history` | `params: { channel, latest: ts, limit: 1, inclusive: true }` |
+| Search messages | GET | `/search.messages` | `params: { query, count?, page?, sort?, sort_dir? }` |
+| Add reaction | POST | `/reactions.add` | `data: { channel, name, timestamp }` |
+| List users | GET | `/users.list` | |
+| Get user info | GET | `/users.info` | `params: { user }` |
+| Find user by email | GET | `/users.lookupByEmail` | `params: { email }` |
+| Join channel | POST | `/conversations.join` | `data: { channel }` |
+
+#### Twitter V2 (`twitter-v2`)
+
+| Operation | Method | Endpoint | Data / Params |
+|---|---|---|---|
+| Search recent tweets | GET | `/2/tweets/search/recent` | `params: { query, 'tweet.fields': 'created_at,text,public_metrics,author_id', expansions: 'author_id', max_results }` |
+| Post tweet | POST | `/2/tweets` | `data: { text }` |
+| Delete tweet | DELETE | `/2/tweets/{id}` | |
+| Get user by ID | GET | `/2/users/{id}` | |
+| Get user by username | GET | `/2/users/by/username/{username}` | |
+| Get user tweets | GET | `/2/users/{id}/tweets` | `params: { max_results, 'tweet.fields' }` |
+| Like a tweet | POST | `/2/users/{userId}/likes` | `data: { tweet_id }` |
+| Follow user | POST | `/2/users/{userId}/following` | `data: { target_user_id }` |
+
+#### YouTube (`youtube`)
+
+| Operation | Method | Endpoint | Data / Params |
+|---|---|---|---|
+| List own channels | GET | `/youtube/v3/channels` | `params: { mine: 'true', part: 'snippet,statistics' }` |
+| Search videos | GET | `/youtube/v3/search` | `params: { q, type: 'video', part: 'snippet', maxResults }` |
+| Get video details | GET | `/youtube/v3/videos` | `params: { id, part: 'snippet,statistics' }` |
+| List playlists | GET | `/youtube/v3/playlists` | `params: { mine: 'true', part: 'snippet' }` |
+
+#### Jira (`jira`)
+
+| Operation | Method | Endpoint | Data / Params |
+|---|---|---|---|
+| Search issues (JQL) | POST | `/rest/api/3/search` | `data: { jql: 'assignee = currentUser()', maxResults }` |
+| Get issue | GET | `/rest/api/3/issue/{key}` | |
+| Create issue | POST | `/rest/api/3/issue` | `data: { fields: { project: { key }, summary, issuetype: { name } } }` |
+| Update issue | PUT | `/rest/api/3/issue/{key}` | `data: { fields: { ... } }` |
+| Add comment | POST | `/rest/api/3/issue/{key}/comment` | `data: { body: { type: 'doc', ... } }` |
+| List projects | GET | `/rest/api/3/project` | |
+| Get myself | GET | `/rest/api/3/myself` | |
+
+See `examples/integrations.ts` for complete working examples.
 
 ---
 
