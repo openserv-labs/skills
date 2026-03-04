@@ -82,6 +82,9 @@ Most agents don't need any LLM API key—use **runless capabilities** or `genera
 # OPENAI_API_KEY=your-openai-key
 # ANTHROPIC_API_KEY=your_anthropic_key  # If using Claude directly
 
+# Required for deploy (get from OpenServ platform dashboard)
+OPENSERV_USER_API_KEY=your-user-api-key
+
 # Auto-populated by provision():
 WALLET_PRIVATE_KEY=
 OPENSERV_API_KEY=
@@ -319,7 +322,31 @@ The `run()` function automatically:
 
 **No need for ngrok or other tunneling tools** - `run()` handles this seamlessly. Just call `run(agent)` and your local agent is accessible to the platform.
 
-### Production
+### Deploy to OpenServ Cloud
+
+Deploy your agent to the OpenServ managed cloud with a single command:
+
+```bash
+npx @openserv-labs/client deploy [path]
+```
+
+Where `[path]` is the directory containing your agent code (defaults to current directory).
+
+#### Prerequisites
+
+1. **`OPENSERV_USER_API_KEY` in `.env`** — Your `.env` file in the agent directory must contain `OPENSERV_USER_API_KEY`. Get this from the OpenServ platform dashboard. This key is required by the deploy command (and by `PlatformClient` for management operations). Note that `provision()` itself does **not** need this key — it creates its own wallet, authenticates, and persists credentials to `.openserv.json` independently. The user API key is also saved to `.openserv.json` after provision if present.
+
+2. **Call `provision()` first** — `provision()` must run at least once before deploying. It registers the agent on the platform and persists credentials to `.openserv.json`. The recommended agent template already calls `provision()` before `run(agent)` in `main()`, so starting the agent locally (`npm run dev` or `npx tsx src/agent.ts`) is enough. If your code does not call `provision()` (e.g., you only call `run(agent)` in a custom script), you must add an explicit `provision()` call and run it once before deploying.
+
+#### Deploy Workflow
+
+```text
+1. Set OPENSERV_USER_API_KEY in .env
+2. Call provision() during local startup (npm run dev) — registers the agent and writes .openserv.json
+3. npx @openserv-labs/client deploy .
+```
+
+### Self-Hosted Production
 
 When deploying to a hosting provider like Cloud Run, set `DISABLE_TUNNEL=true` as an environment variable. This makes `run()` start only the HTTP server without opening a WebSocket tunnel — the platform reaches your agent directly at its public URL.
 

@@ -263,6 +263,32 @@ Common: `0 9 * * *` (daily 9 AM), `*/5 * * * *` (every 5 min), `0 9 * * 1-5` (we
 
 ---
 
+## Deploy to OpenServ Cloud
+
+Deploy your agent to the OpenServ managed cloud with:
+
+```bash
+npx @openserv-labs/client deploy [path]
+```
+
+Where `[path]` is the directory containing your agent code (defaults to current directory).
+
+### Prerequisites
+
+1. **`OPENSERV_USER_API_KEY` in `.env`** — Your `.env` file in the agent directory must contain `OPENSERV_USER_API_KEY`. Get this from the OpenServ platform dashboard. This key is required by the deploy command (and by `PlatformClient` for management operations). Note that `provision()` itself does **not** need this key — it creates its own wallet, authenticates, and persists credentials to `.openserv.json` independently. The user API key is also saved to `.openserv.json` after provision if present.
+
+2. **Call `provision()` first** — `provision()` must run at least once before deploying. It registers the agent on the platform and persists credentials to `.openserv.json`. The recommended agent template already calls `provision()` before `run(agent)` in `main()`, so starting the agent locally (`npm run dev` or `npx tsx src/agent.ts`) is enough. If your code does not call `provision()` (e.g., you only call `run(agent)` in a custom script), you must add an explicit `provision()` call and run it once before deploying.
+
+### Deploy Workflow
+
+```text
+1. Set OPENSERV_USER_API_KEY in .env
+2. Call provision() during local startup (npm run dev) — registers the agent and writes .openserv.json
+3. npx @openserv-labs/client deploy .
+```
+
+---
+
 ## State Management
 
 ```typescript
@@ -331,13 +357,13 @@ const result = await client.payments.payWorkflow({
 
 ## Environment Variables
 
-| Variable                | Description                  | Required |
-| ----------------------- | ---------------------------- | -------- |
-| `OPENSERV_USER_API_KEY` | User API key (from platform) | Yes\*    |
-| `WALLET_PRIVATE_KEY`    | Wallet for SIWE auth         | Yes\*    |
-| `OPENSERV_API_URL`      | Custom API URL               | No       |
+| Variable                | Description                                                            | Required |
+| ----------------------- | ---------------------------------------------------------------------- | -------- |
+| `OPENSERV_USER_API_KEY` | User API key (from platform). Required for deploy and `PlatformClient` | Yes\*    |
+| `WALLET_PRIVATE_KEY`    | Wallet for SIWE auth                                                   | Yes\*    |
+| `OPENSERV_API_URL`      | Custom API URL                                                         | No       |
 
-\*Either API key or wallet key required
+\*Either API key or wallet key required for `PlatformClient`. `OPENSERV_USER_API_KEY` is required for `npx @openserv-labs/client deploy`.
 
 ---
 
