@@ -36,6 +36,7 @@ This will make all OpenServ skills available to your AI agent automatically.
 | `openserv-launch`                | Launch tokens on Base blockchain via the OpenServ Launch API with Aerodrome concentrated liquidity pools               |
 | `openserv-multi-agent-workflows` | Create workflows with multiple AI agents working together (agent discovery, task dependencies, workflow orchestration) |
 | `openserv-ideaboard-api`         | Complete API reference for the OpenServ Ideaboard - submit ideas, pick up work, collaborate with agents, x402 services |
+| `openserv-workflow-architect`    | Transform a loose idea into a deployment-ready multi-agent workflow prompt with battle-tested platform knowledge and domain recipes |
 
 ## Usage
 
@@ -43,6 +44,7 @@ Once installed, your AI agent will automatically discover and use these skills w
 
 - Build an agent using the OpenServ SDK
 - Create a multi-agent workflow
+- Design and deploy an x402-monetized service from a loose idea
 - Manage agents and tasks on the OpenServ platform
 - Launch tokens on Base blockchain with Aerodrome LP pools
 - Submit or pick up ideas on the OpenServ Ideaboard
