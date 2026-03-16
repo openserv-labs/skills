@@ -184,3 +184,168 @@ main()
 ```
 
 **Do not** mix `require()` with ESM-only packages. If you see `ERR_REQUIRE_ESM`, switch to `"type": "module"` or use dynamic imports.
+
+---
+
+## `generate()` with `outputSchema` fails silently
+
+**Problem:** Calling `generate()` with the `outputSchema` parameter causes timeouts, empty responses, or 502 errors.
+
+**Cause:** The platform's internal LLM routing doesn't reliably support structured output mode. The schema constraint causes the underlying model call to hang or fail.
+
+**Solution:** Prompt for plain-text JSON and parse with regex:
+
+```typescript
+// WRONG: outputSchema causes failures
+const result = await this.generate({
+  prompt: 'Analyze this...',
+  outputSchema: z.object({ sentiment: z.string() }),
+  action,
+})
+
+// RIGHT: prompt for JSON text, parse manually
+const generated = await this.generate({
+  prompt: `Analyze this data. Respond with ONLY a JSON object.
+No markdown, no backticks, no explanation.
+Schema: {"sentiment": "BULLISH or BEARISH", "confidence": 0-100}
+
+Data: ${JSON.stringify(data)}`,
+  action,
+})
+
+let result = { sentiment: 'UNKNOWN', confidence: 0 } // fallback
+if (generated) {
+  const match = generated.match(/\{[\s\S]*\}/)
+  if (match) {
+    try { result = JSON.parse(match[0]) } catch {}
+  }
+}
+```
+
+**Rule:** Never use `outputSchema`. Always prompt for plain text JSON and parse with `match(/\{[\s\S]*\}/)`.
+
+---
+
+## Action type crash in capability `run()`
+
+**Problem:** Accessing `action.task` in a capability's `run()` function crashes with "Cannot read properties of undefined."
+
+**Cause:** The `action` parameter can be different types (`do-task`, `respond-chat-message`, etc.). Only `do-task` actions have a `.task` property.
+
+**Solution:** Always type-guard before accessing task properties:
+
+```typescript
+agent.addCapability({
+  name: 'my_capability',
+  schema: z.object({ ... }),
+  async run({ args, action }) {
+    // WRONG: may crash
+    // await this.addLogToTask({ taskId: action.task.id, ... })
+
+    // RIGHT: type guard first
+    if (action?.type === 'do-task' && action.task) {
+      await this.addLogToTask({
+        workspaceId: action.workspace.id,
+        taskId: action.task.id,
+        severity: 'info',
+        type: 'text',
+        body: 'Starting...'
+      })
+    }
+
+    // ... capability logic ...
+    return JSON.stringify(result)
+  }
+})
+```
+
+---
+
+## Don't use `process()`, `doTask()`, or `completeTask()`
+
+**Problem:** Calling `this.process()`, `this.doTask()`, or `this.completeTask()` results in errors or unexpected behavior.
+
+**Cause:** The platform manages the task lifecycle. When your capability's `run()` function returns a value, the platform automatically calls `complete_task` with that output. Calling these methods manually conflicts with the platform's state machine.
+
+**Solution:** Just return your result from `run()`:
+
+```typescript
+async run({ args, action }) {
+  const data = await fetchSomeData(args)
+  const result = processData(data)
+  return JSON.stringify(result) // Platform handles task completion
+}
+```
+
+---
+
+## Model choice affects platform behavior, not just speed
+
+**Problem:** Changing `model_parameters.model` on an agent causes unexpected platform behavior — output rewriting, timeouts, or 502 errors — even though the agent code is unchanged.
+
+**Cause:** The platform's orchestration LLM (which sits between triggers and your capability) changes behavior based on which model is assigned to the agent:
+
+| Agent model | Observed behavior |
+|---|---|
+| `claude-opus-4-6` | Platform passes output through correctly (~153s) |
+| `claude-sonnet-4-6` | Platform model rewrites the entire output (~295s) |
+| `gpt-5-mini` | Container returns 502, platform synthesizes output manually (~534s) |
+| `gpt-5` | Works well for data-fetching tasks, reasonable speed |
+
+**Solution:** Test each model choice end-to-end. Don't assume a model change only affects speed or cost — it changes the platform orchestration model's behavior as well. Start with `gpt-5` for simple data tasks and `claude-opus-4-6` for complex synthesis.
+
+---
+
+## Platform model rewrites or strips output fields
+
+**Problem:** Your agent returns complete JSON, but the stored task output is missing fields, has fields rewritten, or contains added narrative text.
+
+**Cause:** The platform's orchestration LLM processes each task's output before storing it. It may restructure, summarize, or strip fields it considers irrelevant.
+
+**Solution:**
+
+1. Keep your most important data in top-level fields with obvious names (`tldr`, `signal`, `score`) that the platform model recognizes as "the answer"
+2. Use the task body template that minimizes platform intervention:
+
+```
+Call [capability_name] with [parameters].
+Return ONLY the raw JSON output from the capability — nothing else.
+Do NOT create any files. Do NOT use todo lists.
+```
+
+3. If the platform consistently strips a specific field, rename it or move it into a top-level summary field
+
+---
+
+## Platform wraps capability output for downstream tasks
+
+**Problem:** A downstream task receives data wrapped in `{"inputs":{...}, "output":"..."}` or `{"result":"..."}` instead of the raw JSON your agent returned.
+
+**Cause:** The platform's orchestration LLM processes each task's output before passing it to downstream tasks. It may restructure or wrap the data.
+
+**Solution:** Use a robust `extractPayload` helper in every downstream agent:
+
+```typescript
+function extractPayload<T>(raw: string, hasKey: string): T {
+  let parsed: any
+  try { parsed = JSON.parse(raw) } catch {
+    const start = raw.indexOf('{')
+    const end = raw.lastIndexOf('}')
+    if (start >= 0 && end > start) parsed = JSON.parse(raw.slice(start, end + 1))
+    else throw new Error(`Cannot parse: ${raw.slice(0, 200)}`)
+  }
+  if (parsed && typeof parsed === 'object' && hasKey in parsed) return parsed as T
+  for (const field of ['output', 'result', 'data']) {
+    if (parsed?.[field]) {
+      const inner = typeof parsed[field] === 'string'
+        ? JSON.parse(parsed[field])
+        : parsed[field]
+      if (inner && hasKey in inner) return inner as T
+    }
+  }
+  return parsed as T
+}
+
+// Usage:
+const market = extractPayload<ResolvedMarket>(args.market_data, 'token_ids')
+```
