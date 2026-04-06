@@ -50,7 +50,7 @@ Once installed, your AI agent will automatically discover and use these skills w
 ## Learn More
 
 - [skills.sh](https://skills.sh) - Browse and discover more AI agent skills
-- [OpenServ Platform](https://openserv.com) - Learn about the OpenServ multi-agent platform
+- [OpenServ Platform](https://openserv.ai) - Learn about the OpenServ multi-agent platform
 
 ## Contributing
 
