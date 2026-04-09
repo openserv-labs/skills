@@ -48,6 +48,8 @@ The pattern is simple:
 3. Call `provision()` to register on the platform (pass `agent.instance` to bind credentials)
 4. Call `run(agent)` to start
 
+> **Building a production service?** Don't put all your logic in one agent. Decompose into 2-5 specialized agents in a multi-agent workflow — a resolver for input normalization, specialists for each data source, and a compiler for output synthesis. This gives you fan-out parallelism, per-task debugging, and composability. See the **openserv-multi-agent-workflows** skill for patterns, and the **openserv-workflow-architect** skill for a complete workflow design methodology.
+
 ---
 
 ## Complete Agent Template
